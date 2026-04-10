@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Curtain & Emojis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color-1: #FFDEE9;
+      --bg-color-2: #B5FFFC;
+      --bg-color-3: #ffd1ff;
+      --bg-color-4: #e0c3fc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Outfit', sans-serif;
+      background: linear-gradient(-45deg, var(--bg-color-1), var(--bg-color-2), var(--bg-color-3), var(--bg-color-4));
+      background-size: 400% 400%;
+      animation: gradientBg 15s ease infinite;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    @keyframes gradientBg {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .scroll-text {
+      position: absolute;
+      bottom: 40px;
+      left: 40px;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #111;
+      z-index: 2;
+      animation: bounce 2s infinite cubic-bezier(0.28, 0.84, 0.42, 1);
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+
+    @keyframes scatterSpan {
+      0% { transform: translate(0px, 0px) rotate(0deg); opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; }
+    }
+
+    .scroll-text.panic span {
+      display: inline-block;
+      animation: scatterSpan 2.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards !important;
+    }
+
+    /* --- Profile Overlay --- */
+    #profile-layer {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 5; /* behind curtain, above emojis */
+      pointer-events: none; /* enable interactability when settled */
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 1s;
+    }
+
+    #profile-boxes {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, calc(-50% + 100vh));
+      flex-direction: row;
+      gap: 40px;
+      padding: 40px;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      border-radius: 30px;
+      display: flex;
+    }
+    
+    .photo-box img {
+      width: 250px;
+      height: 250px;
+      border-radius: 20px;
+      object-fit: cover;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+
+    .text-box {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 15px;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #333;
+    }
+    .profile-text-row { white-space: nowrap; }
+    .name-row {
+      font-size: 3.5rem;
+      color: #e67e22; /* Matches the toys */
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.15);
+      margin-bottom: 10px;
+    }
+    .target-char { opacity: 0; display: inline-block; } /* reserved slot */
+
+    .spilled-char {
+      position: absolute;
+      font-weight: 800;
+      top: 0; left: 0;
+    }
+
+    #crane {
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      transform-origin: top center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 8;
+    }
+    .crane-base { width: 100px; height: 10px; background: #e67e22; border-radius: 0 0 5px 5px; }
+    .crane-wire { width: 4px; height: 0px; background: #555; }
+    .crane-hook {
+      width: 80px; height: 30px;
+      border: 6px solid #f1c40f;
+      border-top: none;
+      border-radius: 0 0 15px 15px;
+    }
+
+    /* Signalman */
+    #signalman-box {
+       position: absolute;
+       top: calc(50vh - 200px); /* Just above the boxes */
+       left: 50vw; /* Center of screen */
+       transform: translateX(100vw); /* starts entirely off screen */
+       z-index: 12;
+       display: flex;
+       justify-content: center;
+    }
+    .sm-head { width: 30px; height: 30px; background: #e3c39d; border-radius: 50%; position: absolute; top: -30px; z-index: 2; }
+    .sm-hat { width: 34px; height: 16px; background: #f1c40f; border-radius: 10px 10px 0 0; position: absolute; top: -4px; left: -2px; }
+    .sm-body { width: 34px; height: 44px; background: #e67e22; border-radius: 6px; position: absolute; top: 0; z-index: 1; display: flex; justify-content: center; }
+    .sm-vest { width: 20px; height: 44px; background: #d35400; border-radius: 4px; }
+    .sm-leg { width: 12px; height: 30px; background: #34495e; position: absolute; top: 40px; border-radius: 4px; transform-origin: top center; }
+    .sm-left-leg { left: -10px; }
+    .sm-right-leg { right: -10px; }
+    .sm-arm { width: 10px; height: 34px; background: #e3c39d; position: absolute; top: 4px; border-radius: 5px; transform-origin: top center; z-index: 0; }
+    .sm-left-arm { left: -20px; transform: rotate(15deg); }
+    .sm-right-arm { right: -20px; transform: rotate(-15deg); transition: transform 0.3s ease; }
+    
+    .sm-thumbtack {
+       position: absolute;
+       bottom: -30px; left: 3px;
+       width: 8px; height: 32px; background: #bdc3c7; /* needle */
+       border-radius: 0 0 4px 4px;
+       transition: opacity 0.3s;
+    }
+    .sm-thumbtack::before {
+       content: ''; position: absolute;
+       top: -16px; left: -10px;
+       width: 28px; height: 16px; background: #e74c3c; /* head */
+       border-radius: 8px 8px 0 0;
+       box-shadow: 0 0 10px rgba(200,0,0,0.5);
+    }
+
+    /* Signalman Animations */
+    @keyframes walkingLegL { 0%, 100% { transform: rotate(-25deg); } 50% { transform: rotate(25deg); } }
+    @keyframes walkingLegR { 0%, 100% { transform: rotate(25deg); } 50% { transform: rotate(-25deg); } }
+    #signalman-box.walking .sm-left-leg { animation: walkingLegL 0.6s infinite ease-in-out; }
+    #signalman-box.walking .sm-right-leg { animation: walkingLegR 0.6s infinite ease-in-out; }
+
+    @keyframes batonWaving { 0%, 100% { transform: rotate(-130deg); } 50% { transform: rotate(-40deg); } }
+    #signalman-box.waving .sm-right-arm { animation: batonWaving 0.4s infinite ease-in-out; }
+    
+    #signalman-box.pinning .sm-right-arm { transform: rotate(-180deg) !important; transition: transform 0.3s ease-in; }
+
+    .pinned-thumbtack {
+       position: absolute;
+       bottom: calc(100% - 20px); left: 50%;
+       width: 8px; height: 32px; background: #bdc3c7; /* needle */
+       border-radius: 0 0 4px 4px;
+       transform-origin: bottom center;
+       transform: translateX(-50%) rotate(25deg);
+       z-index: 10;
+       display: none;
+    }
+    .pinned-thumbtack::before {
+       content: ''; position: absolute;
+       top: -16px; left: -10px;
+       width: 28px; height: 16px; background: #e74c3c; /* head */
+       border-radius: 8px 8px 0 0;
+       box-shadow: 0 -4px 10px rgba(0,0,0,0.2);
+    }
+
+    /* Particles */
+    .crane-sparkle {
+       position: absolute;
+       width: 8px; height: 8px;
+       background: #fff;
+       border-radius: 50%;
+       box-shadow: 0 0 10px #f1c40f, 0 0 20px #f1c40f;
+       pointer-events: none;
+       z-index: 20;
+       animation: sparkleAnim 1s ease-out forwards;
+    }
+    @keyframes sparkleAnim {
+       0% { transform: scale(0) translate(0, 0); opacity: 1; }
+       100% { transform: scale(1.5) translate(var(--dx), var(--dy)); opacity: 0; }
+    }
+    
+    #bottom-portal {
+       position: absolute;
+       bottom: 0px; left: 50%;
+       transform: translateX(-50%);
+       background: rgba(0,0,0,0.8);
+       border-radius: 50% 50% 0 0;
+       filter: blur(10px);
+       opacity: 0;
+       width: 0px; height: 0px;
+       pointer-events: none;
+       z-index: 1;
+       transition: opacity 0.3s;
+    }
+    #darkness-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        pointer-events: none; opacity: 0; z-index: 999;
+        background: radial-gradient(circle at 50% 100%, transparent var(--dark-radius), black calc(var(--dark-radius) + 15vw));
+        transition: opacity 0.5s;
+    }
+    #bottom-portal {
+       position: absolute;
+       bottom: 0px; left: 50%;
+       transform: translateX(-50%);
+       background: rgba(0,0,0,0.8);
+       border-radius: 50% 50% 0 0;
+       filter: blur(10px);
+       opacity: 0;
+       width: 0px; height: 0px;
+       pointer-events: none;
+       z-index: 1;
+       transition: opacity 0.3s;
+    }
+    #bottom-portal.blackout-active {
+        opacity: 1 !important;
+        transition: opacity 0.5s;
+    }
+    .portal-ripple {
+        position: absolute; 
+        bottom: -20px; left: 50%;
+        border: 4px solid rgba(80,80,80,0.5); 
+        border-radius: 50%;
+        transform: translateX(-50%) scale(0.1);
+        animation: rippleAnim 8s cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
+        pointer-events: none; 
+        mix-blend-mode: color-burn; /* Squashes brightness, exponentially pushes saturation */
+        will-change: transform, opacity;
+        z-index: 0;
+    }
+    @keyframes rippleAnim {
+        0% { transform: translateX(-50%) scale(0.1); opacity: 1; border-width: 8px; }
+        100% { transform: translateX(-50%) scale(15); opacity: 0; border-width: 0px; }
+    }
+
+    .truck {
+      position: absolute;
+      font-size: 90px;
+      z-index: 10;
+    }
+    #dump-truck { left: 0; top: 10vh; }
+    #mixer-truck { right: 0; top: 10vh; }
+
+    /* Curtain Canvas */
+    #curtain {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 10;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Scroll Indicator -->
+  <div class="scroll-text">Scroll Down!! 🤭</div>
+
+  <!-- Darkness Vignette Collapse Layer -->
+  <div id="darkness-overlay" style="--dark-radius: 150vw;"></div>
+
+  <!-- Profile Overlay Layer -->
+  <div id="profile-layer">
+    <!-- Base Portal Effect -->
+    <div id="bottom-portal"></div>
+
+    <!-- Crane -->
+    <div id="crane">
+      <div class="crane-base"></div>
+      <div class="crane-wire" id="crane-wire"></div>
+      <div class="crane-hook"></div>
+    </div>
+
+    <!-- Signalman -->
+    <div id="signalman-box" class="walking">
+       <div class="sm-head"><div class="sm-hat"></div></div>
+       <div class="sm-body"><div class="sm-vest"></div></div>
+       <div class="sm-arm sm-left-arm"></div>
+       <div class="sm-arm sm-right-arm"><div class="sm-thumbtack" id="sm-thumbtack"></div></div>
+       <div class="sm-leg sm-left-leg"></div>
+       <div class="sm-leg sm-right-leg"></div>
+    </div>
+    
+    <!-- Trucks -->
+    <div id="dump-truck" class="truck">🚛</div>
+    <div id="mixer-truck" class="truck">🚚</div>
+
+    <!-- Payload Boxes -->
+    <div id="profile-boxes">
+      <div id="pinned-thumbtack" class="pinned-thumbtack"></div>
+      <div class="photo-box">
+        <img src="data/profileImage.png" alt="Profile">
+      </div>
+      <div class="text-box">
+        <div class="profile-text-row name-row">Jeff</div>
+        <div class="profile-text-row">010-xxxx-xxxx</div>
+        <div class="profile-text-row">itsnotreal@gmail.com</div>
+        <div class="profile-text-row">somewhere in, Seoul, Republic of Korea</div>
+      </div>
+    </div>
+    
+    <div id="spilling-letters"></div>
+  </div>
+
+  <!-- Intractable Canvas Curtain -->
+  <canvas id="curtain"></canvas>
+
+  <script>
+    const canvas = document.getElementById('curtain');
+    const ctx = canvas.getContext('2d');
+    
+    // --- Emoji Setup ---
+    const emojiList = ['🤭', '🫢', '🫣', '🤔', '🤫', '🤪', '😜', '🥹', '😋', '😝', '🤩', '😏', '😅'];
+    const emojis = [];
+    const numEmojis = 80;
+    for (let i = 0; i < numEmojis; i++) {
+       emojis.push({
+          char: emojiList[Math.floor(Math.random() * emojiList.length)],
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * window.innerHeight,
+          vx: (Math.random() - 0.5) * 2,
+          vy: (Math.random() - 0.5) * 2
+       });
+    }
+    
+    // --- Scroll Text Scatter Setup ---
+    const scrollTextEl = document.querySelector('.scroll-text');
+    const textStr = scrollTextEl.textContent;
+    scrollTextEl.innerHTML = '';
+    for (const char of textStr) {
+      const span = document.createElement('span');
+      if (char === ' ') {
+        span.innerHTML = '&nbsp;';
+      } else {
+        span.textContent = char;
+      }
+      let dx = (Math.random() - 0.5) * 2000;
+      let dy = (Math.random() - 0.5) * 2000;
+      let rot = (Math.random() - 0.5) * 1080;
+      span.style.setProperty('--dx', `${dx}px`);
+      span.style.setProperty('--dy', `${dy}px`);
+      span.style.setProperty('--rot', `${rot}deg`);
+      scrollTextEl.appendChild(span);
+    }
+    
+    // --- Profile Boxes Target Setting ---
+    const targetSpans = [];
+    document.querySelectorAll('.profile-text-row').forEach(row => {
+      const text = row.textContent;
+      row.innerHTML = '';
+      for (const char of text) {
+        const span = document.createElement('span');
+        span.className = 'target-char';
+        if (char === ' ') {
+          span.innerHTML = '&nbsp;';
+        } else {
+          span.textContent = char;
+          targetSpans.push(span);
+        }
+        row.appendChild(span);
+      }
+    });
+
+    // Profile Animation States
+    let profileState = 'hidden'; 
+    let craneHookY = 0; 
+    let craneAngle = 0;
+    let craneVel = 0;
+    let craneYVel = 0;
+    let isCraneGrabbed = false;
+    let craneIdleTimer = 0;
+    let portalRippleTimer = 0;
+    let suctionEntities = [];
+    let darknessRadius = 150;
+    let boxesY = window.innerHeight;
+    let signalmanX = window.innerWidth + 200; // start way off screen right
+    let leftTruckX = -400; // start way off screen left
+    let rightTruckX = -400; // start way off screen right
+    let truckRot = 0;
+    let profileTimer = 0;
+    const spilledLetters = [];
+
+    // --- Mouse Interaction Variables ---
+    let targetRadius = 0;
+    let currentRadius = 0;
+    
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    let lastMouseX = window.innerWidth / 2;
+    let lastMouseY = window.innerHeight / 2;
+    let isMouseActive = false;
+    let mouseIsDown = false;
+
+    window.addEventListener('mousedown', (e) => {
+        mouseIsDown = true;
+        if (profileState === 'idle') {
+           const hook = document.querySelector('.crane-hook');
+           if (hook) {
+               const rect = hook.getBoundingClientRect();
+               // Expand hit area slightly to make grabbing easier
+               if (e.clientX >= rect.left - 20 && e.clientX <= rect.right + 20 && e.clientY >= rect.top - 20 && e.clientY <= rect.bottom + 20) {
+                   isCraneGrabbed = true;
+                   craneIdleTimer = 0; // STRICTLY reset timer ONLY on successful grab
+               }
+           }
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        mouseIsDown = false;
+        if (isCraneGrabbed) {
+           isCraneGrabbed = false;
+           // If dropped into the active portal:
+           const craneAbsoluteY = craneHookY * Math.cos(-craneAngle);
+           const dist = window.innerHeight - (craneAbsoluteY + 80);
+           if (dist < 300) {
+               profileState = 'blackout';
+               const portal = document.getElementById('bottom-portal');
+               if (portal) portal.classList.add('blackout-active');
+               const overlay = document.getElementById('darkness-overlay');
+               if (overlay) overlay.style.opacity = '1';
+               
+               const targets = document.querySelectorAll('.target-char, .spilled-char, .photo-box, .sm-head, .sm-body, .sm-left-arm, .sm-right-arm, .sm-left-leg, .sm-right-leg, .crane-base, .crane-wire, .crane-hook, .truck, .scroll-text, .pinned-thumbtack');
+               
+               // Read properties & Break formatting ties
+               targets.forEach(el => {
+                   if (window.getComputedStyle(el).display !== 'none' && el.id !== 'bottom-portal') {
+                       const rect = el.getBoundingClientRect();
+                       const computed = window.getComputedStyle(el);
+                       
+                       el.style.fontSize = computed.fontSize;
+                       el.style.color = computed.color;
+                       el.style.fontWeight = computed.fontWeight;
+                       el.style.whiteSpace = 'nowrap';
+                       
+                       suctionEntities.push({
+                           el: el,
+                           x: rect.left,
+                           y: rect.top,
+                           w: rect.width,
+                           h: rect.height,
+                           vx: (Math.random() - 0.5) * 20,
+                           vy: -Math.random() * 15 - 5,
+                           rot: Math.random() * 360,
+                           vrot: (Math.random() - 0.5) * 30,
+                           scale: 1
+                       });
+                   }
+               });
+               
+               // Absolutize and re-append to body independently
+               suctionEntities.forEach(ent => {
+                   ent.el.style.position = 'fixed';
+                   ent.el.style.left = '0px';
+                   ent.el.style.top = '0px';
+                   ent.el.style.margin = '0';
+                   ent.el.style.transition = 'none';
+                   document.body.appendChild(ent.el);
+               });
+               
+               // Ensure parent containers visually empty
+               ['crane', 'profile-boxes', 'signalman-box'].forEach(id => {
+                   const wrapper = document.getElementById(id);
+                   if (wrapper) wrapper.style.background = 'transparent';
+               });
+           }
+        }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isMouseActive) {
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+        isMouseActive = true;
+      }
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    window.addEventListener('touchmove', (e) => {
+      if (!isMouseActive) {
+        lastMouseX = e.touches[0].clientX;
+        lastMouseY = e.touches[0].clientY;
+        isMouseActive = true;
+      }
+      mouseX = e.touches[0].clientX;
+      mouseY = e.touches[0].clientY;
+    });
+
+    // --- Scroll Physics Variables ---
+    let bottomY = window.innerHeight + 150;
+    let targetBottomY = window.innerHeight + 150;
+    let curtainState = 'closed'; // 'closed', 'opening', 'opened'
+
+    window.addEventListener('wheel', (e) => {
+      if (curtainState === 'opened') return;
+      targetBottomY -= e.deltaY * 0.5; 
+      if (targetBottomY > window.innerHeight + 150) {
+        targetBottomY = window.innerHeight + 150; 
+      }
+    }, { passive: true });
+
+    let lastTouchY = 0;
+    window.addEventListener('touchstart', (e) => {
+      lastTouchY = e.touches[0].clientY;
+    });
+    window.addEventListener('touchmove', (e) => {
+      if (curtainState === 'opened') return;
+      let dy = e.touches[0].clientY - lastTouchY;
+      lastTouchY = e.touches[0].clientY;
+      targetBottomY += dy * 1.5; 
+      if (targetBottomY > window.innerHeight + 150) {
+         targetBottomY = window.innerHeight + 150;
+      }
+    });
+
+    // --- Main Render Loop ---
+    function render() {
+      if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        if (targetBottomY > window.innerHeight + 50) {
+           targetBottomY = window.innerHeight + 150;
+           bottomY = window.innerHeight + 150;
+        }
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // --- Mouse Spotlight Mechanics ---
+      const dx = mouseX - lastMouseX;
+      const dy = mouseY - lastMouseY;
+      const distThisFrame = Math.sqrt(dx * dx + dy * dy);
+      
+      if (isMouseActive && curtainState !== 'opened') {
+        if (distThisFrame > 0) {
+          let idealRadius = 75 + distThisFrame * 0.9;
+          targetRadius = Math.max(targetRadius, idealRadius);
+          targetRadius = Math.min(targetRadius, 400);
+        }
+      }
+
+      targetRadius = Math.max(0, targetRadius - 4);
+
+      if (currentRadius < targetRadius) {
+        currentRadius += (targetRadius - currentRadius) * 0.25; 
+      } else {
+        currentRadius += (targetRadius - currentRadius) * 0.12; 
+      }
+
+      lastMouseX = mouseX;
+      lastMouseY = mouseY;
+
+
+      // --- Curtain Scroll Physics Mechanics ---
+      if (curtainState === 'closed') {
+        if (targetBottomY < window.innerHeight * 0.45) {
+          curtainState = 'opening';
+          targetBottomY = -300;
+        } else {
+          targetBottomY += (window.innerHeight + 150 - targetBottomY) * 0.02;
+        }
+      } else if (curtainState === 'opening') {
+        targetBottomY -= 15;
+        if (bottomY < -200) {
+          curtainState = 'opened';
+          const el = document.querySelector('.scroll-text');
+          if (el) el.classList.add('panic');
+        }
+      }
+
+      bottomY += (targetBottomY - bottomY) * 0.08;
+
+      // --- Render Curtain Layer ---
+      if (curtainState !== 'opened') {
+        let blurProgress = Math.max(0, 1 - (bottomY / window.innerHeight));
+        let lineBlur = 60 + blurProgress * 80;
+        ctx.filter = `blur(${lineBlur}px)`; 
+        ctx.fillStyle = '#050505';
+        
+        ctx.beginPath();
+        ctx.moveTo(-200, -200);
+        ctx.lineTo(canvas.width + 200, -200);
+        ctx.lineTo(canvas.width + 200, bottomY);
+        ctx.lineTo(-200, bottomY);
+        ctx.lineTo(-200, -200);
+        ctx.fill();
+
+        if (currentRadius > 1) {
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.filter = 'blur(25px)'; 
+          ctx.beginPath();
+          ctx.arc(mouseX, mouseY, currentRadius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalCompositeOperation = 'source-over';
+        }
+
+        ctx.filter = 'none';
+      }
+
+      // --- Emoji Physics & Rendering ---
+      // Draw emojis underneath the curtain layer
+      ctx.globalCompositeOperation = 'destination-over';
+      ctx.font = '60px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // No hard speed limit needed when using appropriate friction.
+      for (let i = 0; i < emojis.length; i++) {
+        let e1 = emojis[i];
+        let fx = 0, fy = 0;
+
+        if (curtainState === 'opened') {
+          // 5. Scatter indefinitely relative to mouse location
+          let ex = e1.x - mouseX;
+          let ey = e1.y - mouseY;
+          if (ex === 0 && ey === 0) { ex = 1; ey = 1; }
+          let dist = Math.sqrt(ex*ex + ey*ey);
+          fx += (ex / dist) * 1.5; 
+          fy += (ey / dist) * 1.5;
+        } else {
+          // 3. Flee mouse hole
+          if (currentRadius > 1 && isMouseActive) {
+             let ex = e1.x - mouseX;
+             let ey = e1.y - mouseY;
+             let dist = Math.sqrt(ex*ex + ey*ey) || 1;
+             
+             if (dist < currentRadius + 40) {
+                let force = (currentRadius + 40 - dist) * 0.1;
+                fx += (ex / dist) * force;
+                fy += (ey / dist) * force;
+             }
+          }
+
+          // 4. Spread evenly without overlap
+          for (let j = 0; j < emojis.length; j++) {
+             if (i === j) continue;
+             let e2 = emojis[j];
+             let ex = e1.x - e2.x;
+             let ey = e1.y - e2.y;
+             if (ex === 0 && ey === 0) {
+                ex = Math.random() - 0.5;
+                ey = Math.random() - 0.5;
+             }
+             let dist = Math.sqrt(ex*ex + ey*ey);
+             
+             if (dist < 70) {
+                let force = (70 - dist) * 0.08; // Strong un-overlap
+                fx += (ex / dist) * force;
+                fy += (ey / dist) * force;
+             } else if (dist < 150) {
+                let force = (150 - dist) * 0.003; // Soft spread
+                fx += (ex / dist) * force;
+                fy += (ey / dist) * force;
+             }
+          }
+
+          // Bounds keeping when closed
+          const margin = 30;
+          if (e1.x < margin) fx += (margin - e1.x) * 0.1;
+          if (e1.x > canvas.width - margin) fx -= (e1.x - (canvas.width - margin)) * 0.1;
+          if (e1.y < margin) fy += (margin - e1.y) * 0.1;
+          if (e1.y > canvas.height - margin) fy -= (e1.y - (canvas.height - margin)) * 0.1;
+        }
+
+        // 힘 적용
+        e1.vx += fx;
+        e1.vy += fy;
+
+        // 마찰력과 유기적 움직임
+        if (curtainState !== 'opened') {
+           e1.vx += (Math.random() - 0.5) * 0.6;
+           e1.vy += (Math.random() - 0.5) * 0.6;
+           // 자연스러운 최고 속도 한계점을 만드는 마찰력
+           e1.vx *= 0.82;
+           e1.vy *= 0.82;
+        } else {
+           // 퇴장 시엔 마찰이 적어 엄청 빨리 화면 밖으로 산개
+           e1.vx *= 0.99;
+           e1.vy *= 0.99;
+        }
+
+        e1.x += e1.vx;
+        e1.y += e1.vy;
+
+        // Finally draw it behind the curtain hole
+        ctx.fillText(e1.char, e1.x, e1.y);
+      }
+      
+      // --- Profile Page Physics & Sequence ---
+      if (curtainState === 'opened' && profileState === 'hidden') {
+         profileState = 'crane_down';
+         document.getElementById('profile-layer').style.opacity = '1';
+      }
+
+      if (profileState === 'crane_down') {
+         craneHookY += 10; 
+         if (craneHookY > window.innerHeight + 200) {
+            craneHookY = window.innerHeight + 200;
+            profileState = 'crane_up';
+         }
+      } else if (profileState === 'crane_up') {
+         let speed = Math.max(1, boxesY * 0.04); // Decelerates gradually
+         craneHookY -= speed;
+         boxesY -= speed;
+         if (boxesY < 2) {
+            boxesY = 0; 
+            profileState = 'crane_retract';
+         }
+      } else if (profileState === 'crane_retract') {
+         craneHookY -= (craneHookY - 75) * 0.05; // Smoothly ease to 75 (half distance)
+         if (craneHookY - 75 < 2) {
+            craneHookY = 75;
+            profileState = 'signalman_in';
+         }
+      } else if (profileState === 'signalman_in') {
+         signalmanX -= (signalmanX - 0) * 0.03 + 1; 
+         if (signalmanX < 2) {
+            signalmanX = 0;
+            profileState = 'trucks_in';
+            const sm = document.getElementById('signalman-box');
+            if (sm) {
+               sm.classList.remove('walking');
+               sm.classList.add('waving');
+            }
+         }
+      } else if (profileState === 'trucks_in') {
+         let targetTruckX = window.innerWidth / 2 - 250;
+         leftTruckX += (targetTruckX - leftTruckX) * 0.03 + 1; // Smooth driving
+         rightTruckX += (targetTruckX - rightTruckX) * 0.03 + 1;
+         if (targetTruckX - leftTruckX < 2) {
+            leftTruckX = targetTruckX;
+            rightTruckX = targetTruckX;
+            profileState = 'dumping';
+            profileTimer = 0;
+            
+            // Spawn spelled letters!
+            const spillContainer = document.getElementById('spilling-letters');
+            targetSpans.forEach((span, idx) => {
+                const spLetter = document.createElement('div');
+                spLetter.className = 'spilled-char';
+                spLetter.textContent = span.textContent;
+                spillContainer.appendChild(spLetter);
+                
+                // Copy destination styles seamlessly
+                const compStyle = window.getComputedStyle(span);
+                spLetter.style.fontSize = compStyle.fontSize;
+                spLetter.style.color = compStyle.color;
+                spLetter.style.textShadow = compStyle.textShadow;
+                spLetter.style.fontWeight = compStyle.fontWeight;
+                
+                const isLeft = idx % 2 === 0;
+                spilledLetters.push({
+                   element: spLetter,
+                   targetElement: span,
+                   isLeft: isLeft,
+                   x: -2000,
+                   y: -2000,
+                   vx: (Math.random() - 0.5) * 6 + (isLeft ? 4 : -4),
+                   vy: (Math.random() - 0.5) * 8 - 4,
+                   rot: Math.random() * 360,
+                   timer: Math.random() * -40, // staggered delay
+                   spawned: false,
+                   settled: false
+                });
+            });
+         }
+      } else if (profileState === 'dumping') {
+         profileTimer++;
+         truckRot += 0.5;
+         if(truckRot > 45) truckRot = 45;
+         
+         if (profileTimer > 250) { 
+            profileState = 'letters_settle'; // trucks leave and letters settle
+         }
+      } else if (profileState === 'letters_settle') {
+         truckRot -= 1;
+         if(truckRot < 0) truckRot = 0;
+         leftTruckX -= 6;
+         rightTruckX -= 6;
+         
+         if (leftTruckX < -300 && spilledLetters.every(l => l.settled)) {
+             profileState = 'signalman_pin';
+             profileTimer = 0;
+             const sm = document.getElementById('signalman-box');
+             if (sm) {
+                sm.classList.remove('waving');
+                sm.classList.add('pinning');
+             }
+         }
+      } else if (profileState === 'signalman_pin') {
+         profileTimer++;
+         // wait for arm to swing down
+         if (profileTimer === 50) {
+             const thumbtack = document.getElementById('sm-thumbtack');
+             if (thumbtack) thumbtack.style.opacity = '0'; // remove from hand
+             const pin = document.getElementById('pinned-thumbtack');
+             if (pin) pin.style.display = 'block'; // plant into boxes
+         }
+         if (profileTimer > 120) {
+             profileState = 'signalman_leave';
+             const sm = document.getElementById('signalman-box');
+             if (sm) {
+                sm.classList.remove('pinning');
+                sm.classList.add('walking');
+             }
+         }
+      } else if (profileState === 'signalman_leave') {
+         signalmanX += 5; // walk back out
+         if (signalmanX > window.innerWidth / 2 + 100) {
+             profileState = 'idle';
+             document.getElementById('profile-layer').style.pointerEvents = 'auto';
+         }
+      }
+
+      // Render profile layer CSS dynamically
+      const wireEl = document.getElementById('crane-wire');
+      if (wireEl) wireEl.style.height = `${Math.max(0, craneHookY)}px`;
+      
+      const boxesEl = document.getElementById('profile-boxes');
+      if (boxesEl) boxesEl.style.transform = `translate(-50%, calc(-50% + ${boxesY}px))`;
+      
+      const dumpEl = document.getElementById('dump-truck');
+      if (dumpEl) {
+         dumpEl.style.transform = `translateX(${leftTruckX}px) rotate(${truckRot}deg)`;
+      }
+      
+      const mixerEl = document.getElementById('mixer-truck');
+      if (mixerEl) {
+         // Correctly resolves the negative right offset for scaleX flip
+         mixerEl.style.transform = `translateX(${-rightTruckX}px) scaleX(-1) rotate(${truckRot}deg)`;
+      }
+
+      // Render Physics for letters
+      if (profileState === 'letters_settle' || profileState === 'dumping') {
+         spilledLetters.forEach(letter => {
+            letter.timer++;
+            
+            if (letter.timer < 0) {
+               // Keep completely off-screen until trigger
+               letter.element.style.transform = `translate(-2000px, -2000px)`; 
+               return;
+            } else if (!letter.spawned) {
+               // Initialize drop location EXACTLY ONCE
+               letter.spawned = true;
+               letter.x = letter.isLeft ? leftTruckX + 80 : window.innerWidth - rightTruckX - 80;
+               letter.y = window.innerHeight * 0.15 + 40;
+            }
+
+            if (letter.settled) return;
+
+            const rect = letter.targetElement.getBoundingClientRect();
+            const targetX = rect.left;
+            const targetY = rect.top;
+            
+            if (letter.timer < 100) {
+               // Normal bouncy fall
+               letter.vy += 0.4; // gravity
+               letter.y += letter.vy;
+               letter.x += letter.vx;
+               
+               // bounce on bottom floor (virtual)
+               const floorY = boxesEl.getBoundingClientRect().bottom - 20;
+               if (letter.y > floorY) {
+                  letter.y = floorY;
+                  letter.vy *= -0.4;
+                  letter.vx *= 0.8;
+               }
+               letter.rot += letter.vx * 3;
+            } else {
+               // Magnetic pull phase
+               const dx = targetX - letter.x;
+               const dy = targetY - letter.y;
+               letter.vx += dx * 0.008;
+               letter.vy += dy * 0.008;
+
+               letter.vx *= 0.85;
+               letter.vy *= 0.85;
+               
+               letter.x += letter.vx;
+               letter.y += letter.vy;
+               
+               letter.rot *= 0.9; 
+               
+               const dist = Math.sqrt(dx*dx + dy*dy);
+               if (dist < 1 && Math.abs(letter.vx) < 0.2) {
+                  letter.settled = true;
+                  letter.element.style.display = 'none';
+                  letter.targetElement.style.opacity = '1';
+               }
+            }
+            letter.element.style.transform = `translate(${letter.x}px, ${letter.y}px) rotate(${letter.rot}deg)`;
+         });
+      }
+      
+      // Interactive Crane Physics (Pendulum & Stretch Spring)
+      if (profileState === 'blackout') {
+          const targetX = window.innerWidth / 2;
+          const targetY = window.innerHeight; // center bottom portal
+          
+          suctionEntities.forEach(ent => {
+             if (ent.scale <= 0.05) return;
+             
+             const dx = targetX - (ent.x + ent.w/2);
+             const dy = targetY - (ent.y + ent.h/2);
+             const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+             
+             ent.vx += (dx / dist) * 1.5; 
+             ent.vy += (dy / dist) * 1.5;
+             ent.vy += 0.5; // gravity
+             
+             ent.x += ent.vx;
+             ent.y += ent.vy;
+             ent.rot += ent.vrot;
+             
+             if (dist < 400) ent.scale *= 0.94;
+             
+             ent.el.style.transform = `translate(${ent.x}px, ${ent.y}px) rotate(${ent.rot}deg) scale(${ent.scale})`;
+             if (ent.scale <= 0.05) ent.el.style.display = 'none';
+          });
+          
+          const overlay = document.getElementById('darkness-overlay');
+          if (overlay) {
+             darknessRadius -= 1.5;
+             overlay.style.setProperty('--dark-radius', `${Math.max(0, darknessRadius)}vw`);
+             if (darknessRadius < 0) {
+                 document.body.style.background = 'black';
+                 document.body.innerHTML = ''; // Force wipe all UI and canvas
+                 return; // Completely halt the render loop forever
+             }
+          }
+      } else if (profileState === 'idle') {
+          if (!isCraneGrabbed) {
+              craneIdleTimer++;
+              if (craneIdleTimer > 300) { // roughly 5s
+                  craneIdleTimer = 0;
+                  const hookEl = document.querySelector('.crane-hook');
+                  if (hookEl) {
+                      const rect = hookEl.getBoundingClientRect();
+                      const x = rect.left + rect.width / 2;
+                      const y = rect.top + rect.height / 2;
+                      for(let i=0; i<25; i++) {
+                         const p = document.createElement('div');
+                         p.className = 'crane-sparkle';
+                         p.style.left = `${x}px`;
+                         p.style.top = `${y}px`;
+                         const angle = Math.random() * Math.PI * 2;
+                         const dist = 30 + Math.random() * 80;
+                         const size = 3 + Math.random() * 7;
+                         p.style.width = `${size}px`;
+                         p.style.height = `${size}px`;
+                         const colors = ['#f1c40f', '#fff', '#e67e22', '#f39c12'];
+                         const color = colors[Math.floor(Math.random() * colors.length)];
+                         p.style.background = color;
+                         p.style.boxShadow = `0 0 10px ${color}, 0 0 20px ${color}`;
+                         p.style.setProperty('--dx', `${Math.cos(angle)*dist}px`);
+                         p.style.setProperty('--dy', `${Math.sin(angle)*dist}px`);
+                         document.body.appendChild(p);
+                         setTimeout(() => p.remove(), 1000 + Math.random() * 500);
+                      }
+                  }
+              }
+          } else {
+              craneIdleTimer = 0;
+          }
+      }
+
+      if (profileState !== 'hidden') {
+          if (isCraneGrabbed) {
+              const baseEl = document.querySelector('.crane-base');
+              if (baseEl) {
+                  const baseRect = baseEl.getBoundingClientRect();
+                  const baseX = baseRect.left + baseRect.width / 2;
+                  const baseY = baseRect.top;
+                  const dx = mouseX - baseX;
+                  const dy = mouseY - baseY;
+                  // atan2 measures Y downwards in browser, calculate exact offset
+                  craneAngle = Math.atan2(dx, Math.max(1, dy));
+                  craneVel = 0; // Nullify swinging energy
+                  
+                  // Rubber band pulling! Add stretch tension!
+                  const dist = Math.sqrt(dx*dx + dy*dy);
+                  craneHookY = Math.max(75, dist - 25);
+                  craneYVel = 0;
+              }
+          } else {
+              // Apply swinging rest mechanics
+              if (profileState !== 'crane_down' && profileState !== 'crane_up') {
+                  craneVel -= Math.sin(craneAngle) * 0.04; // Gentle gravity
+                  craneAngle += craneVel;
+                  craneVel *= 0.95; // Moderate friction
+                  
+                  // Spring shrink dynamics!
+                  if (profileState !== 'crane_retract') {
+                     craneYVel -= (craneHookY - 75) * 0.1; // Spring tension force back to center
+                     craneHookY += craneYVel;
+                     craneYVel *= 0.85; // Spring friction/damping
+                  }
+              }
+          }
+          const craneEl = document.getElementById('crane');
+          // Important: We invert the angle because transform rotate expects clockwise rotations 
+          if (craneEl) craneEl.style.transform = `translateX(-50%) rotate(${-craneAngle}rad)`;
+          
+          // Portal Ripple Calculation
+          const portal = document.getElementById('bottom-portal');
+          if (portal && profileState !== 'crane_down' && profileState !== 'blackout') {
+             if (isCraneGrabbed) {
+                 const craneAbsoluteY = craneHookY * Math.cos(-craneAngle);
+                 const currentDistanceToBottom = window.innerHeight - (craneAbsoluteY + 80); // 80 is hook height offset
+             
+                 if (currentDistanceToBottom < 300) {
+                    const scaleRange = Math.max(0, 1 - (currentDistanceToBottom / 300));
+                    portal.style.width = `${scaleRange * 180}px`; // max 180px width (1.5x)
+                    portal.style.height = `${scaleRange * 90}px`; 
+                    portal.style.opacity = scaleRange;
+                    
+                    // Controlled rhythm spawn
+                    portalRippleTimer++;
+                    if (portalRippleTimer > 100 - (scaleRange * 50)) { // 20% speed of previous ~6 per sec max
+                        portalRippleTimer = 0;
+                        const rip = document.createElement('div');
+                        rip.className = 'portal-ripple';
+                        rip.style.width = `${scaleRange * 180}px`;
+                        rip.style.height = `${scaleRange * 180}px`; // perfect circle expanding
+                        document.getElementById('profile-layer').insertBefore(rip, portal);
+                        setTimeout(() => rip.remove(), 8000); // match new 8s optimized length
+                    }
+                 } else {
+                    portal.style.opacity = '0';
+                 }
+             } else {
+                 portal.style.opacity = '0';
+             }
+          }
+      }
+
+      const smBox = document.getElementById('signalman-box');
+      if (smBox && profileState !== 'hidden') {
+         if (profileState === 'signalman_leave') {
+            smBox.style.transform = `translateX(${signalmanX}px) scaleX(-1)`;
+         } else {
+            smBox.style.transform = `translateX(${signalmanX}px)`;
+         }
+      }
+
+      // restore global composite
+      ctx.globalCompositeOperation = 'source-over';
+
+      requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>
