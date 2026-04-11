@@ -140,53 +140,6 @@
       border-radius: 0 0 15px 15px;
     }
 
-    /* Signalman */
-    #signalman-box {
-       position: absolute;
-       top: calc(50vh - 200px); /* Just above the boxes */
-       left: 50vw; /* Center of screen */
-       transform: translateX(100vw); /* starts entirely off screen */
-       z-index: 12;
-       display: flex;
-       justify-content: center;
-    }
-    .sm-head { width: 30px; height: 30px; background: #e3c39d; border-radius: 50%; position: absolute; top: -30px; z-index: 2; }
-    .sm-hat { width: 34px; height: 16px; background: #f1c40f; border-radius: 10px 10px 0 0; position: absolute; top: -4px; left: -2px; }
-    .sm-body { width: 34px; height: 44px; background: #e67e22; border-radius: 6px; position: absolute; top: 0; z-index: 1; display: flex; justify-content: center; }
-    .sm-vest { width: 20px; height: 44px; background: #d35400; border-radius: 4px; }
-    .sm-leg { width: 12px; height: 30px; background: #34495e; position: absolute; top: 40px; border-radius: 4px; transform-origin: top center; }
-    .sm-left-leg { left: -10px; }
-    .sm-right-leg { right: -10px; }
-    .sm-arm { width: 10px; height: 34px; background: #e3c39d; position: absolute; top: 4px; border-radius: 5px; transform-origin: top center; z-index: 0; }
-    .sm-left-arm { left: -20px; transform: rotate(15deg); }
-    .sm-right-arm { right: -20px; transform: rotate(-15deg); transition: transform 0.3s ease; }
-    
-    .sm-thumbtack {
-       position: absolute;
-       bottom: -30px; left: 3px;
-       width: 8px; height: 32px; background: #bdc3c7; /* needle */
-       border-radius: 0 0 4px 4px;
-       transition: opacity 0.3s;
-    }
-    .sm-thumbtack::before {
-       content: ''; position: absolute;
-       top: -16px; left: -10px;
-       width: 28px; height: 16px; background: #e74c3c; /* head */
-       border-radius: 8px 8px 0 0;
-       box-shadow: 0 0 10px rgba(200,0,0,0.5);
-    }
-
-    /* Signalman Animations */
-    @keyframes walkingLegL { 0%, 100% { transform: rotate(-25deg); } 50% { transform: rotate(25deg); } }
-    @keyframes walkingLegR { 0%, 100% { transform: rotate(25deg); } 50% { transform: rotate(-25deg); } }
-    #signalman-box.walking .sm-left-leg { animation: walkingLegL 0.6s infinite ease-in-out; }
-    #signalman-box.walking .sm-right-leg { animation: walkingLegR 0.6s infinite ease-in-out; }
-
-    @keyframes batonWaving { 0%, 100% { transform: rotate(-130deg); } 50% { transform: rotate(-40deg); } }
-    #signalman-box.waving .sm-right-arm { animation: batonWaving 0.4s infinite ease-in-out; }
-    
-    #signalman-box.pinning .sm-right-arm { transform: rotate(-180deg) !important; transition: transform 0.3s ease-in; }
-
     .pinned-thumbtack {
        position: absolute;
        bottom: calc(100% - 20px); left: 50%;
@@ -195,7 +148,6 @@
        transform-origin: bottom center;
        transform: translateX(-50%) rotate(25deg);
        z-index: 10;
-       display: none;
     }
     .pinned-thumbtack::before {
        content: ''; position: absolute;
@@ -274,13 +226,21 @@
         100% { transform: translateX(-50%) scale(15); opacity: 0; border-width: 0px; }
     }
 
-    .truck {
+    #drop-zone-indicator {
       position: absolute;
-      font-size: 90px;
+      bottom: 0px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 192px;
+      height: 75px;
+      border: 3px dashed rgba(0, 0, 0, 0.3);
+      border-bottom: none;
+      border-radius: 20px 20px 0 0;
+      pointer-events: none;
       z-index: 10;
+      opacity: 0;
+      transition: opacity 0.5s;
     }
-    #dump-truck { left: 0; top: 10vh; }
-    #mixer-truck { right: 0; top: 10vh; }
 
     /* Curtain Canvas */
     #curtain {
@@ -306,6 +266,7 @@
   <div id="profile-layer">
     <!-- Base Portal Effect -->
     <div id="bottom-portal"></div>
+    <div id="drop-zone-indicator"></div>
 
     <!-- Crane -->
     <div id="crane">
@@ -314,19 +275,7 @@
       <div class="crane-hook"></div>
     </div>
 
-    <!-- Signalman -->
-    <div id="signalman-box" class="walking">
-       <div class="sm-head"><div class="sm-hat"></div></div>
-       <div class="sm-body"><div class="sm-vest"></div></div>
-       <div class="sm-arm sm-left-arm"></div>
-       <div class="sm-arm sm-right-arm"><div class="sm-thumbtack" id="sm-thumbtack"></div></div>
-       <div class="sm-leg sm-left-leg"></div>
-       <div class="sm-leg sm-right-leg"></div>
-    </div>
-    
-    <!-- Trucks -->
-    <div id="dump-truck" class="truck">🚛</div>
-    <div id="mixer-truck" class="truck">🚚</div>
+
 
     <!-- Payload Boxes -->
     <div id="profile-boxes">
@@ -416,11 +365,6 @@
     let suctionEntities = [];
     let darknessRadius = 150;
     let boxesY = window.innerHeight;
-    let signalmanX = window.innerWidth + 200; // start way off screen right
-    let leftTruckX = -400; // start way off screen left
-    let rightTruckX = -400; // start way off screen right
-    let truckRot = 0;
-    let profileTimer = 0;
     const spilledLetters = [];
 
     // --- Mouse Interaction Variables ---
@@ -453,18 +397,16 @@
         mouseIsDown = false;
         if (isCraneGrabbed) {
            isCraneGrabbed = false;
-           // If dropped into the active portal:
-           const craneAbsoluteY = craneHookY * Math.cos(-craneAngle);
-           const dist = window.innerHeight - (craneAbsoluteY + 80);
-           if (dist < 300) {
-               profileState = 'blackout';
-               const portal = document.getElementById('bottom-portal');
-               if (portal) portal.classList.add('blackout-active');
-               const overlay = document.getElementById('darkness-overlay');
-               if (overlay) overlay.style.opacity = '1';
-               
-               const targets = document.querySelectorAll('.target-char, .spilled-char, .photo-box, .sm-head, .sm-body, .sm-left-arm, .sm-right-arm, .sm-left-leg, .sm-right-leg, .crane-base, .crane-wire, .crane-hook, .truck, .scroll-text, .pinned-thumbtack');
-               
+           // If released while mouse cursor is inside the drop zone:
+           const distY = window.innerHeight - mouseY;
+           const distX = Math.abs(mouseX - window.innerWidth / 2);
+           if (distY < 75 && distX < 96) {
+                profileState = 'blackout';
+                const overlay = document.getElementById('darkness-overlay');
+                if (overlay) overlay.style.opacity = '1';
+                
+                const targets = document.querySelectorAll('.target-char, .spilled-char, .photo-box, .crane-base, .crane-wire, .crane-hook, .scroll-text, .pinned-thumbtack');
+                
                // Read properties & Break formatting ties
                targets.forEach(el => {
                    if (window.getComputedStyle(el).display !== 'none' && el.id !== 'bottom-portal') {
@@ -502,9 +444,13 @@
                });
                
                // Ensure parent containers visually empty
-               ['crane', 'profile-boxes', 'signalman-box'].forEach(id => {
+               ['crane', 'profile-boxes'].forEach(id => {
                    const wrapper = document.getElementById(id);
-                   if (wrapper) wrapper.style.background = 'transparent';
+                   if (wrapper) {
+                       wrapper.style.background = 'transparent';
+                       wrapper.style.boxShadow = 'none';
+                       wrapper.style.backdropFilter = 'none';
+                   }
                });
            }
         }
@@ -754,28 +700,7 @@
          craneHookY -= (craneHookY - 75) * 0.05; // Smoothly ease to 75 (half distance)
          if (craneHookY - 75 < 2) {
             craneHookY = 75;
-            profileState = 'signalman_in';
-         }
-      } else if (profileState === 'signalman_in') {
-         signalmanX -= (signalmanX - 0) * 0.03 + 1; 
-         if (signalmanX < 2) {
-            signalmanX = 0;
-            profileState = 'trucks_in';
-            const sm = document.getElementById('signalman-box');
-            if (sm) {
-               sm.classList.remove('walking');
-               sm.classList.add('waving');
-            }
-         }
-      } else if (profileState === 'trucks_in') {
-         let targetTruckX = window.innerWidth / 2 - 250;
-         leftTruckX += (targetTruckX - leftTruckX) * 0.03 + 1; // Smooth driving
-         rightTruckX += (targetTruckX - rightTruckX) * 0.03 + 1;
-         if (targetTruckX - leftTruckX < 2) {
-            leftTruckX = targetTruckX;
-            rightTruckX = targetTruckX;
-            profileState = 'dumping';
-            profileTimer = 0;
+            profileState = 'letters_settle';
             
             // Spawn spelled letters!
             const spillContainer = document.getElementById('spilling-letters');
@@ -792,65 +717,22 @@
                 spLetter.style.textShadow = compStyle.textShadow;
                 spLetter.style.fontWeight = compStyle.fontWeight;
                 
-                const isLeft = idx % 2 === 0;
                 spilledLetters.push({
                    element: spLetter,
                    targetElement: span,
-                   isLeft: isLeft,
                    x: -2000,
                    y: -2000,
-                   vx: (Math.random() - 0.5) * 6 + (isLeft ? 4 : -4),
-                   vy: (Math.random() - 0.5) * 8 - 4,
+                   vx: (Math.random() - 0.5) * 10,
+                   vy: (Math.random() - 0.5) * 5,
                    rot: Math.random() * 360,
-                   timer: Math.random() * -40, // staggered delay
+                   timer: Math.random() * -60, // staggered delay
                    spawned: false,
                    settled: false
                 });
             });
          }
-      } else if (profileState === 'dumping') {
-         profileTimer++;
-         truckRot += 0.5;
-         if(truckRot > 45) truckRot = 45;
-         
-         if (profileTimer > 250) { 
-            profileState = 'letters_settle'; // trucks leave and letters settle
-         }
       } else if (profileState === 'letters_settle') {
-         truckRot -= 1;
-         if(truckRot < 0) truckRot = 0;
-         leftTruckX -= 6;
-         rightTruckX -= 6;
-         
-         if (leftTruckX < -300 && spilledLetters.every(l => l.settled)) {
-             profileState = 'signalman_pin';
-             profileTimer = 0;
-             const sm = document.getElementById('signalman-box');
-             if (sm) {
-                sm.classList.remove('waving');
-                sm.classList.add('pinning');
-             }
-         }
-      } else if (profileState === 'signalman_pin') {
-         profileTimer++;
-         // wait for arm to swing down
-         if (profileTimer === 50) {
-             const thumbtack = document.getElementById('sm-thumbtack');
-             if (thumbtack) thumbtack.style.opacity = '0'; // remove from hand
-             const pin = document.getElementById('pinned-thumbtack');
-             if (pin) pin.style.display = 'block'; // plant into boxes
-         }
-         if (profileTimer > 120) {
-             profileState = 'signalman_leave';
-             const sm = document.getElementById('signalman-box');
-             if (sm) {
-                sm.classList.remove('pinning');
-                sm.classList.add('walking');
-             }
-         }
-      } else if (profileState === 'signalman_leave') {
-         signalmanX += 5; // walk back out
-         if (signalmanX > window.innerWidth / 2 + 100) {
+         if (spilledLetters.length > 0 && spilledLetters.every(l => l.settled)) {
              profileState = 'idle';
              document.getElementById('profile-layer').style.pointerEvents = 'auto';
          }
@@ -862,20 +744,9 @@
       
       const boxesEl = document.getElementById('profile-boxes');
       if (boxesEl) boxesEl.style.transform = `translate(-50%, calc(-50% + ${boxesY}px))`;
-      
-      const dumpEl = document.getElementById('dump-truck');
-      if (dumpEl) {
-         dumpEl.style.transform = `translateX(${leftTruckX}px) rotate(${truckRot}deg)`;
-      }
-      
-      const mixerEl = document.getElementById('mixer-truck');
-      if (mixerEl) {
-         // Correctly resolves the negative right offset for scaleX flip
-         mixerEl.style.transform = `translateX(${-rightTruckX}px) scaleX(-1) rotate(${truckRot}deg)`;
-      }
 
       // Render Physics for letters
-      if (profileState === 'letters_settle' || profileState === 'dumping') {
+      if (profileState === 'letters_settle') {
          spilledLetters.forEach(letter => {
             letter.timer++;
             
@@ -883,55 +754,42 @@
                // Keep completely off-screen until trigger
                letter.element.style.transform = `translate(-2000px, -2000px)`; 
                return;
-            } else if (!letter.spawned) {
-               // Initialize drop location EXACTLY ONCE
-               letter.spawned = true;
-               letter.x = letter.isLeft ? leftTruckX + 80 : window.innerWidth - rightTruckX - 80;
-               letter.y = window.innerHeight * 0.15 + 40;
             }
-
-            if (letter.settled) return;
 
             const rect = letter.targetElement.getBoundingClientRect();
             const targetX = rect.left;
             const targetY = rect.top;
-            
-            if (letter.timer < 100) {
-               // Normal bouncy fall
-               letter.vy += 0.4; // gravity
-               letter.y += letter.vy;
-               letter.x += letter.vx;
-               
-               // bounce on bottom floor (virtual)
-               const floorY = boxesEl.getBoundingClientRect().bottom - 20;
-               if (letter.y > floorY) {
-                  letter.y = floorY;
-                  letter.vy *= -0.4;
-                  letter.vx *= 0.8;
-               }
-               letter.rot += letter.vx * 3;
-            } else {
-               // Magnetic pull phase
-               const dx = targetX - letter.x;
-               const dy = targetY - letter.y;
-               letter.vx += dx * 0.008;
-               letter.vy += dy * 0.008;
 
-               letter.vx *= 0.85;
-               letter.vy *= 0.85;
-               
-               letter.x += letter.vx;
-               letter.y += letter.vy;
-               
-               letter.rot *= 0.9; 
-               
-               const dist = Math.sqrt(dx*dx + dy*dy);
-               if (dist < 1 && Math.abs(letter.vx) < 0.2) {
-                  letter.settled = true;
-                  letter.element.style.display = 'none';
-                  letter.targetElement.style.opacity = '1';
-               }
+            if (!letter.spawned) {
+               // Initialize drop location EXACTLY ONCE
+               letter.spawned = true;
+               letter.x = targetX + (Math.random() - 0.5) * 50;
+               letter.y = -50 - Math.random() * 50;
             }
+
+            if (letter.settled) return;
+            
+            const dx = targetX - letter.x;
+            const dy = targetY - letter.y;
+            
+            letter.vx += dx * 0.015;
+            letter.vy += dy * 0.015;
+
+            letter.vx *= 0.85;
+            letter.vy *= 0.85;
+            
+            letter.x += letter.vx;
+            letter.y += letter.vy;
+            
+            letter.rot *= 0.85; 
+            
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < 1 && Math.abs(letter.vx) < 0.2 && Math.abs(letter.vy) < 0.2) {
+               letter.settled = true;
+               letter.element.style.display = 'none';
+               letter.targetElement.style.opacity = '1';
+            }
+            
             letter.element.style.transform = `translate(${letter.x}px, ${letter.y}px) rotate(${letter.rot}deg)`;
          });
       }
@@ -1047,16 +905,25 @@
           
           // Portal Ripple Calculation
           const portal = document.getElementById('bottom-portal');
-          if (portal && profileState !== 'crane_down' && profileState !== 'blackout') {
+          const dzIndicator = document.getElementById('drop-zone-indicator');
+          
+          if (profileState !== 'crane_down' && profileState !== 'blackout') {
              if (isCraneGrabbed) {
+                 const mDistY = window.innerHeight - mouseY;
+                 const mDistX = Math.abs(mouseX - window.innerWidth / 2);
+                 if (dzIndicator) {
+                     if (mDistY < 150 && mDistX < 192) {
+                         dzIndicator.style.opacity = '1';
+                     } else {
+                         dzIndicator.style.opacity = '0';
+                     }
+                 }
+                 
                  const craneAbsoluteY = craneHookY * Math.cos(-craneAngle);
                  const currentDistanceToBottom = window.innerHeight - (craneAbsoluteY + 80); // 80 is hook height offset
              
                  if (currentDistanceToBottom < 300) {
                     const scaleRange = Math.max(0, 1 - (currentDistanceToBottom / 300));
-                    portal.style.width = `${scaleRange * 180}px`; // max 180px width (1.5x)
-                    portal.style.height = `${scaleRange * 90}px`; 
-                    portal.style.opacity = scaleRange;
                     
                     // Controlled rhythm spawn
                     portalRippleTimer++;
@@ -1069,23 +936,16 @@
                         document.getElementById('profile-layer').insertBefore(rip, portal);
                         setTimeout(() => rip.remove(), 8000); // match new 8s optimized length
                     }
-                 } else {
-                    portal.style.opacity = '0';
                  }
              } else {
-                 portal.style.opacity = '0';
+                 if (dzIndicator) dzIndicator.style.opacity = '0';
              }
+          } else {
+             if (dzIndicator) dzIndicator.style.opacity = '0';
           }
       }
 
-      const smBox = document.getElementById('signalman-box');
-      if (smBox && profileState !== 'hidden') {
-         if (profileState === 'signalman_leave') {
-            smBox.style.transform = `translateX(${signalmanX}px) scaleX(-1)`;
-         } else {
-            smBox.style.transform = `translateX(${signalmanX}px)`;
-         }
-      }
+
 
       // restore global composite
       ctx.globalCompositeOperation = 'source-over';
