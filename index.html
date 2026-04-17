@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Interactive Curtain & Emojis</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
@@ -31,7 +31,6 @@
       animation: gradientBg 15s ease infinite;
       user-select: none;
       -webkit-user-select: none;
-      touch-action: none;
     }
 
     @keyframes gradientBg {
@@ -332,8 +331,10 @@
     /* --- Card Scene --- */
     #card-scene {
       position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
       z-index: 1000;
       opacity: 0;
       pointer-events: none;
@@ -350,7 +351,7 @@
       position: absolute;
       transform-style: preserve-3d;
       transition: opacity 0.6s, box-shadow 0.6s;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
       border-radius: 14px;
     }
 
@@ -360,8 +361,8 @@
       border-radius: 14px;
       background-color: #1a1a2e;
       border: 6px solid #d4af37;
-      background-image: 
-        linear-gradient(45deg, rgba(212, 175, 55, 0.3) 25%, transparent 25%, transparent 75%, rgba(212, 175, 55, 0.3) 75%, rgba(212, 175, 55, 0.3)), 
+      background-image:
+        linear-gradient(45deg, rgba(212, 175, 55, 0.3) 25%, transparent 25%, transparent 75%, rgba(212, 175, 55, 0.3) 75%, rgba(212, 175, 55, 0.3)),
         linear-gradient(45deg, rgba(212, 175, 55, 0.3) 25%, transparent 25%, transparent 75%, rgba(212, 175, 55, 0.3) 75%, rgba(212, 175, 55, 0.3));
       background-size: 20px 20px;
       background-position: 0 0, 10px 10px;
@@ -369,9 +370,12 @@
       align-items: center;
       justify-content: center;
       position: absolute;
-      top: 0; left: 0;
+      top: 0;
+      left: 0;
       backface-visibility: hidden;
+      transform: translateZ(-1px);
     }
+
     .card-back::after {
       content: '';
       width: 120px;
@@ -381,13 +385,220 @@
       border-radius: 50%;
       position: absolute;
     }
+
     .card-back::before {
       content: '';
       width: calc(100% - 30px);
       height: calc(100% - 30px);
-      border: 2px solid #d4af37;
-      position: absolute;
+      border: 2px solid rgba(212, 175, 55, 0.5);
       border-radius: 8px;
+    }
+
+    .card-front {
+      width: 100%;
+      height: 100%;
+      background-color: #1a1a2e;
+      border: 6px solid #d4af37;
+      border-radius: 14px;
+      position: absolute;
+      top: 0; left: 0;
+      backface-visibility: hidden;
+      transform: rotateY(180deg) translateZ(1px);
+      box-sizing: border-box;
+      pointer-events: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px 20px 20px;
+      color: white;
+      text-align: center;
+    }
+
+    /* Front UI Base Components */
+    .front-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      margin-top: 15px;
+    }
+
+    .card-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #f1c40f;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      border-bottom: 2px solid rgba(241, 196, 15, 0.3);
+      padding-bottom: 10px;
+      width: 100%;
+      letter-spacing: 1px;
+    }
+
+    .card-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      width: 100%;
+    }
+
+    .card-content p {
+      font-size: 14px;
+      line-height: 1.5;
+      color: #ddd;
+      margin-top: 15px;
+    }
+
+    .icon-symbol {
+      font-size: 45px;
+      margin-bottom: 10px;
+      filter: drop-shadow(0 0 10px rgba(241, 196, 15, 0.4));
+    }
+
+    .card-link-block {
+      width: 100%;
+      height: 110px;
+      border-radius: 8px;
+      text-decoration: none;
+      overflow: hidden;
+      display: block;
+      border: 2px solid rgba(255,255,255,0.2);
+      transition: transform 0.2s, border-color 0.2s;
+      position: relative;
+      z-index: 10;
+      pointer-events: auto;
+    }
+    .card-link-block:hover {
+      transform: scale(1.05);
+      border-color: #f1c40f;
+    }
+    .fake-img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    }
+
+    .highlight-text {
+      background: rgba(241, 196, 15, 0.15);
+      border: 1px solid #f1c40f;
+      padding: 15px;
+      border-radius: 8px;
+      color: #f1c40f;
+      font-weight: bold;
+      line-height: 1.4;
+      margin-bottom: 10px;
+    }
+
+    .action-btn {
+      background: #ff4d4d;
+      color: #fff;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      z-index: 10;
+      pointer-events: auto;
+    }
+    .action-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(255, 77, 77, 0.4);
+    }
+
+    /* Circled X Close Button */
+    .close-card-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid #d4af37;
+      color: #d4af37;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      transition: transform 0.2s, background 0.2s, color 0.2s;
+      font-weight: bold;
+      background: transparent;
+    }
+    .close-card-btn:hover {
+      transform: scale(1.15);
+      background: #d4af37;
+      color: #1a1a2e;
+    }
+
+    /* Custom Theme 6 */
+    .card-back.card6-theme,
+    .card-front.card6-theme {
+       background-color: #3b0918;
+       border-color: #ff4d4d;
+       background-image: 
+         linear-gradient(45deg, rgba(255, 77, 77, 0.15) 25%, transparent 25%, transparent 75%, rgba(255, 77, 77, 0.15) 75%, rgba(255, 77, 77, 0.15)),
+         linear-gradient(45deg, rgba(255, 77, 77, 0.15) 25%, transparent 25%, transparent 75%, rgba(255, 77, 77, 0.15) 75%, rgba(255, 77, 77, 0.15));
+    }
+    .card-back.card6-theme::after {
+       background: #3b0918;
+       border-color: #ff4d4d;
+    }
+    .card-back.card6-theme::before {
+       border-color: rgba(255, 77, 77, 0.5);
+    }
+    .card-front.card6-theme .card-title {
+       color: #ff4d4d;
+       border-color: rgba(255, 77, 77, 0.4);
+    }
+    .card-front.card6-theme .close-card-btn {
+       color: #ff4d4d;
+       border-color: #ff4d4d;
+    }
+    .card-front.card6-theme .close-card-btn:hover {
+       background: #ff4d4d;
+       color: #3b0918;
+    }
+
+    /* Custom Theme 0 (Portfolio) */
+    .card-back.card0-theme,
+    .card-front.card0-theme {
+       background-color: #0b2e2d;
+       border-color: #20c997;
+       background-image: 
+         linear-gradient(45deg, rgba(32, 201, 151, 0.15) 25%, transparent 25%, transparent 75%, rgba(32, 201, 151, 0.15) 75%, rgba(32, 201, 151, 0.15)),
+         linear-gradient(45deg, rgba(32, 201, 151, 0.15) 25%, transparent 25%, transparent 75%, rgba(32, 201, 151, 0.15) 75%, rgba(32, 201, 151, 0.15));
+    }
+    .card-back.card0-theme::after {
+       background: #0b2e2d;
+       border-color: #20c997;
+    }
+    .card-back.card0-theme::before {
+       border-color: rgba(32, 201, 151, 0.5);
+    }
+    .card-front.card0-theme .card-title {
+       color: #20c997;
+       border-color: rgba(32, 201, 151, 0.4);
+    }
+    .card-front.card0-theme .close-card-btn {
+       color: #20c997;
+       border-color: #20c997;
+    }
+    .card-front.card0-theme .close-card-btn:hover {
+       background: #20c997;
+       color: #0b2e2d;
     }
 
     .carousel-container {
@@ -401,7 +612,7 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 0; 
+      width: 0;
       height: 0;
     }
 
@@ -413,64 +624,41 @@
       color: #d4af37;
       border: 2px solid #d4af37;
       font-size: 2rem;
-      width: 60px; height: 60px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
       cursor: pointer;
       z-index: 20;
       backdrop-filter: blur(10px);
       transition: background 0.3s, transform 0.3s, opacity 0.5s;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-family: inherit;
     }
+
     .nav-arrow:hover {
       background: rgba(80, 80, 100, 0.8);
       transform: translateY(-50%) scale(1.1);
     }
-    .nav-arrow.left { left: 40px; }
-    .nav-arrow.right { right: 40px; }
+
+    .nav-arrow.left {
+      left: 40px;
+    }
+
+    .nav-arrow.right {
+      right: 40px;
+    }
 
     /* Hide arrows initially */
-    .nav-arrow { opacity: 0; pointer-events: none; }
-    .nav-arrow.show { opacity: 1; pointer-events: auto; }
+    .nav-arrow {
+      opacity: 0;
+      pointer-events: none;
+    }
 
-    /* --- Mobile Responsive Rules --- */
-    @media (max-width: 768px) {
-      .scroll-text {
-        font-size: 1.4rem;
-        left: 20px;
-        bottom: 20px;
-      }
-      #profile-boxes {
-        flex-direction: column;
-        padding: 20px;
-        gap: 20px;
-        width: 85%;
-        max-width: 350px;
-        align-items: center;
-        text-align: center;
-      }
-      .photo-box img {
-        width: 180px;
-        height: 180px;
-      }
-      .text-box {
-        align-items: center;
-        font-size: 1.1rem;
-      }
-      .name-row {
-        font-size: 2.2rem;
-      }
-      .nav-arrow {
-        width: 40px;
-        height: 40px;
-        font-size: 1.5rem;
-      }
-      .nav-arrow.left {
-        left: 10px;
-      }
-      .nav-arrow.right {
-        right: 10px;
-      }
+    .nav-arrow.show {
+      opacity: 1;
+      pointer-events: auto;
     }
   </style>
 </head>
@@ -486,6 +674,7 @@
   <!-- Card Scene Overlay -->
   <div id="card-scene">
     <div class="carousel-container">
+      <div id="dim-overlay" style="position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: black; z-index: 500; opacity: 0; pointer-events: none;"></div>
       <button class="nav-arrow left" id="nav-left">&lt;</button>
       <div id="cards-wrapper"></div>
       <button class="nav-arrow right" id="nav-right">&gt;</button>
@@ -504,7 +693,7 @@
     </div>
 
     <div id="profile-boxes">
-      <div id="pinned-thumbtack" class="pinned-thumbtack"></div>
+      <div id="pinned-thumbtack" class="pinned-thumbtack" style="opacity: 0;"></div>
       <div class="photo-box">
         <img src="data/profileImage.png" alt="Profile">
       </div>
@@ -581,14 +770,19 @@
     let profileState = 'hidden';
     let craneHookY = 0;
     let craneAngle = 0;
-    let craneVel = 0;
-    let craneYVel = 0;
+    let craneVel = 0; // Crane Angular Velocity
+    let craneYVel = 0; // Crane Gravity/Spring
+    let craneYankVel = 0; // 초고속 프로필 리프팅 모터
     let isCraneGrabbed = false;
     let craneIdleTimer = 0;
     let portalRippleTimer = 0;
     let suctionEntities = [];
     let darknessRadius = 150;
     let boxesY = window.innerHeight;
+    let boxesYVel = 0;
+    let boxesAngle = 0;
+    let boxesAngleVel = 0;
+    let tackAnimProgress = 0;
     const spilledLetters = [];
 
 
@@ -742,10 +936,10 @@
 
         if (profileState === 'card_scene') {
           let diffTarget = targetCardIndex - visualCardIndex;
-          
+
           // 리니어 이동속도를 롤백하고 원래의 감속 부드러운 속도로 환원
           visualCardIndex += diffTarget * 0.08;
-          
+
           if (cardSceneState === 'active_initial') {
             if (Math.abs(diffTarget) < 0.05) {
               visualCardIndex = targetCardIndex;
@@ -753,31 +947,69 @@
             }
           }
 
+          // Expand state Lerp logic
+          if (cardSceneState === 'expanded') {
+              // 카드 뽑기 시작 시 이동 속도를 느리게 조절 (서서히 가속)
+              let expandSpeed = 0.025 + (expandProgress * 0.065);
+              expandProgress += (1 - expandProgress) * expandSpeed;
+          } else {
+              expandProgress += (0 - expandProgress) * 0.08;
+              if (expandProgress < 0.001) expandProgress = 0; // 부동소수점 무한대 오류 차단 (정확히 0으로 수렴)
+          }
+          
+          let dimOver = document.getElementById('dim-overlay');
+          if (dimOver) {
+             dimOver.style.opacity = expandProgress * 0.9; // 뒷면 거의 까맣게
+             dimOver.style.pointerEvents = expandProgress > 0.1 ? 'auto' : 'none'; // 확대 중 배경 클릭시 오작동 차단
+          }
+
           generatedCards.forEach((cardEl, index) => {
             if (cardEl.dataset.spawned !== 'true') return;
             
-            let isMobile = window.innerWidth <= 768;
             let diff = index - visualCardIndex;
             let absDiff = Math.abs(diff);
             
-            // Widen gap (모바일에서는 간격 좁힘)
-            let targetX = diff * (isMobile ? 65 : 120);  
-            // Arch (모바일 상승폭 축소)
-            let targetY = Math.pow(absDiff, 1.4) * (isMobile ? 22 : 35); 
+            // Widen gap
+            let targetX = diff * 120;  
+            // Arch
+            let targetY = Math.pow(absDiff, 1.4) * 35; 
             
             // Pop up to the top
             let popUp = 0;
-            if (cardSceneState === 'active') {
+            if (cardSceneState === 'active' || cardSceneState === 'expanded' || expandProgress > 0.01) {
               popUp = Math.max(0, 1 - absDiff);
             } else if (cardSceneState === 'active_initial' && index === targetCardIndex) {
               // 이동 경로상의 다른 카드들은 무시하고 타겟 카드만 팝업됨
               popUp = Math.max(0, 1 - absDiff);
             }
             
-            let finalY = targetY + (popUp * (isMobile ? -90 : -150)); 
+            let finalY = targetY + (popUp * -150); 
             
             let rotZ = diff * 15;
-            let tScale = isMobile ? 0.6 : 0.9; // 모바일 환경 화면비례 축소
+            let rotY = 0;
+            let tScale = 0.9; 
+
+            // Expansion Physics Override
+            let isTarget = (index === targetCardIndex);
+            if (isTarget && expandProgress > 0) {
+               // 당겨지며 왼쪽으로 스윽 빠지는 S-curve 모션 폭 대폭 상승
+               let pullLeft = Math.sin(expandProgress * Math.PI) * -380;
+               targetX += pullLeft;
+               
+               // 위치는 점진적으로 센터 0, 0 로 회귀
+               targetX = targetX * (1 - expandProgress) + 0;
+               finalY = finalY * (1 - expandProgress) + 0;
+               
+               // 가장 왼쪽(0.5) 지점을 지날 때부터 뒤집기와 확대가 시작되도록 제어
+               let flipProgress = Math.max(0, (expandProgress - 0.5) * 2);
+               
+               // 회전 Z는 원래 각도에서 서서히 0으로 정렬 (전체 구간)
+               rotZ = rotZ * (1 - expandProgress) + 0;
+               
+               // Y축 뒤집기와 크기 확대를 절반 이후(flipProgress) 구간에만 적용
+               rotY = flipProgress * 180;
+               tScale = tScale * (1 - flipProgress) + (2.2 * flipProgress);
+            }
 
             // Spawning Animation via JS
             let p = parseFloat(cardEl.dataset.spawnProgress);
@@ -792,18 +1024,34 @@
             
             let currentX = targetX * easeP;
             let currentY = startY + ((finalY - startY) * easeP);
-            let currentRot = rotZ * easeP;
-            let spawnScale = isMobile ? 0.3 : 0.6;
-            let currentScale = spawnScale + ((tScale - spawnScale) * easeP);
+            let currentRotZ = rotZ * easeP;
+            let currentScale = 0.6 + ((tScale - 0.6) * easeP);
             
-            // Z-인덱스를 본래 배열 인덱스로 유지 (겹치는 순서 고정)
+            // Z-인덱스 고정, 회전 및 확대 시작 시점(0.5 초과)과 동일하게 카드 위로 올림
             let zIndex = index;
+            if (isTarget && expandProgress > 0.5) {
+               zIndex = 1000;
+            }
             
-            cardEl.style.transform = `translate(-50%, -50%) translateX(${currentX}px) translateY(${currentY}px) rotateZ(${currentRot}deg) scale(${currentScale})`;
+            cardEl.style.transform = `translate(-50%, -50%) translateX(${currentX}px) translateY(${currentY}px) rotateZ(${currentRotZ}deg) rotateY(${rotY}deg) scale(${currentScale})`;
             cardEl.style.zIndex = zIndex;
+
+            // 투명도 자체는 모두 원래대로 1로 고정하여 자체는 또렷하게 유지 (검정 오버레이가 가려줌)
+            cardEl.style.opacity = 1;
             
-            // 그림자를 동일하게 유지하여 깊이감(튀어나오는 느낌) 제거
-            cardEl.style.boxShadow = '0 15px 35px rgba(0,0,0,0.8)';
+            // 확대 모드 돌입 시 배경 카드들 물리적 클릭 비활성화
+            if (!isTarget && expandProgress > 0) {
+               cardEl.style.pointerEvents = expandProgress > 0.5 ? 'none' : 'auto';
+            } else {
+               cardEl.style.pointerEvents = 'auto';
+            }
+            
+            // 그림자를 동일하게 유지하여 깊이감 제거, 단 확대 모드일 땐 추가
+            if (isTarget && expandProgress > 0) {
+               cardEl.style.boxShadow = `0 ${15 + expandProgress * 30}px ${35 + expandProgress * 45}px rgba(0,0,0,${0.8 - expandProgress*0.2})`;
+            } else {
+               cardEl.style.boxShadow = '0 15px 35px rgba(0,0,0,0.8)';
+            }
           });
         }
 
@@ -969,23 +1217,61 @@
       }
 
       if (profileState === 'crane_down') {
-        craneHookY += 10;
+        craneHookY += 60; // 초고속 하강
         if (craneHookY > window.innerHeight + 200) {
           craneHookY = window.innerHeight + 200;
-          profileState = 'crane_up';
+          craneYankVel = -60; // 낚아채는 상승 속도
+          profileState = 'crane_yank';
         }
-      } else if (profileState === 'crane_up') {
-        let speed = Math.max(1, boxesY * 0.04);
-        craneHookY -= speed;
-        boxesY -= speed;
-        if (boxesY < 2) {
-          boxesY = 0;
-          profileState = 'crane_retract';
+      } else if (profileState === 'crane_yank') {
+        craneHookY += craneYankVel;
+        boxesY = craneHookY;
+        
+        // 천장(길이 0) 충돌 시 크레인과 박스 모두 동일하게 감쇠 반사(Bounce)
+        if (craneHookY <= 0) {
+           craneHookY = 0;
+           let bounceVel = Math.abs(craneYankVel) * 0.5;
+           
+           craneYVel = bounceVel; // 크레인 훅 반사는 그대로
+           boxesYVel = 0; // 박스는 순간적으로 공중에 체공(Hang)하도록 하방 속도 0
+           
+           profileState = 'box_flying';
         }
-      } else if (profileState === 'crane_retract') {
-        craneHookY -= (craneHookY - 75) * 0.05;
-        if (craneHookY - 75 < 2) {
-          craneHookY = 75;
+      } else if (profileState === 'box_flying') {
+        // 분리되어 공중에 체공하는 동안 서서히 35도 각도로 기울기 시작
+        boxesAngle += (35 - boxesAngle) * 0.08;
+        
+        // 체공 시간 확보를 위해 낮은 중력(0.7) 적용
+        boxesYVel += 0.7; 
+        boxesY += boxesYVel;
+        
+        // 튕겨 내려오면서 원래 크레인 훅 정착점 부근(Y=75)에 도달하는 순간
+        if (boxesY >= 75) {
+           boxesY = 75;
+           
+           // 강제 스냅 제거: 지금까지 기울어진 각도는 유지하고,
+           // 수직으로 떨어지던 속도를 폭발적인 회전(스윙) 속도로 변환하여 자연스럽게 연결
+           boxesAngleVel = boxesYVel * 0.8; 
+           boxesYVel = 0; 
+           
+           tackAnimProgress = 0;
+           profileState = 'box_pinned';
+        }
+      } else if (profileState === 'box_pinned') {
+        // 크레인 복귀는 아래 범용 물리가 자동 해결하도록 삭제
+
+        // 압정 박히는 모션 (Scale 5 -> 1)
+        if (tackAnimProgress < 1) {
+           tackAnimProgress += 0.2;
+        }
+        
+        // 감쇠 진동 (Pendulum Physics)
+        boxesAngleVel -= boxesAngle * 0.15; // 중앙(0도)으로 당기는 스프링 힘
+        boxesAngleVel *= 0.9; // 공기 저항/마찰력
+        boxesAngle += boxesAngleVel;
+        
+        if (tackAnimProgress >= 1 && Math.abs(boxesAngle) < 0.1 && Math.abs(boxesAngleVel) < 0.1) {
+          boxesAngle = 0;
           profileState = 'letters_settle';
 
           const spillContainer = document.getElementById('spilling-letters');
@@ -1026,7 +1312,27 @@
       if (wireEl) wireEl.style.height = `${Math.max(0, craneHookY)}px`;
 
       const boxesEl = document.getElementById('profile-boxes');
-      if (boxesEl) boxesEl.style.transform = `translate(-50%, calc(-50% + ${boxesY}px))`;
+      if (boxesEl) {
+         boxesEl.style.transformOrigin = '50% 20px'; // 압정이 꽂힌 정확한 위치를 축으로 회전
+         boxesEl.style.transform = `translate(-50%, calc(-50% + ${boxesY}px)) rotateZ(${boxesAngle}deg)`;
+      }
+
+      const tackEl = document.getElementById('pinned-thumbtack');
+      if (tackEl) {
+         if (profileState === 'box_pinned' || profileState === 'letters_settle' || profileState === 'idle') {
+            tackEl.style.opacity = '1';
+            
+            // 4배 크기, 우상단 화면 밖(X:600, Y:-800)에서 날아와 정확히 꽂히는 연출
+            let tScale = Math.max(1, 4 - tackAnimProgress * 3);
+            let moveX = (1 - tackAnimProgress) * 600;
+            let moveY = (1 - tackAnimProgress) * -800;
+            
+            // 박스가 흔들릴 때(boxesAngle) 압정은 반대로 회전값을 빼주어 배경에 완벽히 고정된 것처럼 연출
+            tackEl.style.transform = `translate(calc(-50% + ${moveX}px), ${moveY}px) rotate(${25 - boxesAngle}deg) scale(${tScale})`;
+         } else {
+            tackEl.style.opacity = '0';
+         }
+      }
 
       if (profileState === 'letters_settle') {
         spilledLetters.forEach(letter => {
@@ -1115,7 +1421,7 @@
             document.getElementById('profile-layer').style.display = 'none';
             const scrollTxt = document.querySelector('.scroll-text');
             if (scrollTxt) scrollTxt.style.display = 'none';
-            
+
             initCardScene();
           }
         }
@@ -1172,15 +1478,22 @@
             craneYVel = 0;
           }
         } else {
-          if (profileState !== 'crane_down' && profileState !== 'crane_up') {
+          if (profileState !== 'crane_down' && profileState !== 'crane_yank') {
             craneVel -= Math.sin(craneAngle) * 0.04;
             craneAngle += craneVel;
             craneVel *= 0.95;
 
-            if (profileState !== 'crane_retract') {
+            // 강제 리프팅/하강 구간을 제외하고는 항상 스프링처럼 75로 수렴
+            if (profileState !== 'crane_down' && profileState !== 'crane_yank') {
               craneYVel -= (craneHookY - 75) * 0.1;
               craneHookY += craneYVel;
               craneYVel *= 0.85;
+              
+              // 크레인 줄 길이 0(천장) 도달 시 관성 방향 감쇠 반사(Bounce)
+              if (craneHookY < 0) {
+                 craneHookY = 0;
+                 craneYVel = Math.abs(craneYVel) * 0.5; // 아래 방향으로 50% 텐션 반사
+              }
             }
           }
         }
@@ -1233,45 +1546,143 @@
 
     // --- Card Scene Variables & Interactions ---
     const cardDataList = [
+      { id: 0 },
       { id: 1 },
       { id: 2 },
       { id: 3 },
       { id: 4 },
-      { id: 5 }
+      { id: 5 },
+      { id: 6 }
     ];
     let targetCardIndex = 0;
     let visualCardIndex = 0; // Physics iter variable
+    let expandProgress = 0; // 확대 플립 애니메이션 변수 
     let generatedCards = [];
-    let cardSceneState = 'hidden'; // 'hidden', 'spawning', 'active'
-    
+    let cardSceneState = 'hidden'; // 'hidden', 'spawning', 'active', 'active_initial', 'expanded'
+
     function initCardScene() {
       const scene = document.getElementById('card-scene');
       const wrapper = document.getElementById('cards-wrapper');
-      
+
       scene.style.opacity = '1';
       scene.style.pointerEvents = 'auto'; // allow clicks
 
       wrapper.innerHTML = '';
       generatedCards = [];
-      
+
       cardSceneState = 'spawning';
-      targetCardIndex = (cardDataList.length - 1) / 2; // 중앙 정렬 상태로 스폰
+      targetCardIndex = Math.floor((cardDataList.length - 1) / 2); // 중앙 정렬 상태로 스폰
       visualCardIndex = targetCardIndex;
-      
+
       cardDataList.forEach((data, index) => {
+        let cardThemeClass = index === 6 ? 'card6-theme' : (index === 0 ? 'card0-theme' : '');
+        let innerHTML = '';
+        
+        switch (index) {
+          case 0:
+            innerHTML = `
+              <div class="card-title">Class Portfolio</div>
+              <div class="card-content">
+                <div class="icon-symbol">🎓</div>
+                <p>A showcase of the comprehensive web development skills and projects acquired during the DC-AI-VIBE class.</p>
+              </div>`;
+            break;
+          case 1:
+            innerHTML = `
+              <div class="card-title">AI Literacy</div>
+              <div class="card-content">
+                <div class="icon-symbol">✨</div>
+                <p>How to properly utilize advanced AI models to your advantage.</p>
+              </div>`;
+            break;
+          case 2:
+            innerHTML = `
+              <div class="card-title">Antigravity</div>
+              <div class="card-content">
+                <div class="icon-symbol">🚀</div>
+                <p>Antigravity tutorial: The ultimate agentic workflow for building software.</p>
+              </div>`;
+            break;
+          case 3:
+            innerHTML = `
+              <div class="card-title">Game Creation 1</div>
+              <div class="card-content">
+                <a href="pages/HalliGalli.html" target="_blank" class="card-link-block">
+                  <div class="fake-img-placeholder" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">Preview HalliGalli</div>
+                </a>
+                <p>Build a game with Antigravity.</p>
+              </div>`;
+            break;
+          case 4:
+            innerHTML = `
+              <div class="card-title">Game Creation 2</div>
+              <div class="card-content">
+                <a href="pages/HalliGalli.html" target="_blank" class="card-link-block">
+                  <div class="fake-img-placeholder" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">Preview My Game</div>
+                </a>
+                <p>Design and build your own game.</p>
+              </div>`;
+            break;
+          case 5:
+            innerHTML = `
+              <div class="card-title">Website Building</div>
+              <div class="card-content">
+                <div class="highlight-text">You are looking at this page right now!</div>
+                <p>Build your own website seamlessly with Github Pages.</p>
+              </div>`;
+            break;
+          case 6:
+            innerHTML = `
+              <div class="card-title">Return to Start?</div>
+              <div class="card-content">
+                <p style="margin-bottom: 20px;">Would you like to restart the experience?</p>
+                <div class="btn-group">
+                  <button class="action-btn" onclick="location.reload()">Restart</button>
+                </div>
+              </div>`;
+            break;
+        }
+
         const cardWrap = document.createElement('div');
         cardWrap.className = 'card generated-card';
-        cardWrap.innerHTML = '<div class="card-back"></div>';
+        cardWrap.innerHTML = `
+          <div class="card-back ${cardThemeClass}"></div>
+          <div class="card-front ${cardThemeClass}">
+             <div class="close-card-btn">&times;</div>
+             <div class="front-container">
+               ${innerHTML}
+             </div>
+          </div>
+        `;
+
+        // 닫기 버튼 바인딩
+        const closeBtn = cardWrap.querySelector('.close-card-btn');
+        closeBtn.addEventListener('click', (e) => {
+           e.stopPropagation();
+           if (cardSceneState === 'expanded') {
+               cardSceneState = 'active';
+           }
+        });
+
+        // 카드 자체 클릭 바인딩
+        cardWrap.addEventListener('click', (e) => {
+           if (cardSceneState !== 'active') return;
+           if (targetCardIndex !== index) {
+               targetCardIndex = index; // 주변 카드인 경우 활성화
+           } else {
+               cardSceneState = 'expanded'; // 메인 카드인 경우 확대 애니메이션
+           }
+        });
         
         // Initial inline states for physics calc
         cardWrap.style.transform = `translate(-50%, -50%) scale(0.6)`;
         cardWrap.style.opacity = '0';
         cardWrap.dataset.spawned = 'false';
         cardWrap.dataset.spawnProgress = '0';
-        
+
         wrapper.appendChild(cardWrap);
         generatedCards.push(cardWrap);
-        
+
         // Fly out sequentially
         setTimeout(() => {
           cardWrap.dataset.spawned = 'true';
@@ -1307,14 +1718,9 @@
       if (profileState !== 'card_scene' || cardSceneState !== 'active') return;
       e.preventDefault();
       if (scrollCooldown) return;
-      
-      let rawDeltaX = Math.abs(e.deltaX);
-      let rawDeltaY = Math.abs(e.deltaY);
-      
-      if (rawDeltaX < 5 && rawDeltaY < 5) return; // 미세 떨림 무시
-      
-      let direction = rawDeltaX > rawDeltaY ? Math.sign(e.deltaX) : Math.sign(e.deltaY);
-      
+
+      let direction = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? Math.sign(e.deltaX) : Math.sign(e.deltaY);
+
       if (direction > 0 && targetCardIndex < cardDataList.length - 1) {
         targetCardIndex++;
         scrollCooldown = true;
@@ -1322,7 +1728,7 @@
         targetCardIndex--;
         scrollCooldown = true;
       }
-      
+
       if (scrollCooldown) {
         setTimeout(() => scrollCooldown = false, 150); // 짧은 쿨다운으로 횟수 기준 제어
       }
@@ -1346,9 +1752,8 @@
     cardScene.addEventListener('mousemove', (e) => {
       if (!isDraggingCarousel) return;
       let dx = dragStartX - e.clientX; // reversed drag map
-      let DRAG_SENSITIVITY = window.innerWidth <= 768 ? 90 : PIXELS_PER_INDEX;
-      let dragOffset = dx / DRAG_SENSITIVITY;
-      
+      let dragOffset = dx / PIXELS_PER_INDEX;
+
       let rawTarget = dragStartIndex + dragOffset;
       // Hard clamp so drag doesn't pull far out of array visually
       targetCardIndex = Math.max(-0.5, Math.min(cardDataList.length - 0.5, rawTarget));
@@ -1369,13 +1774,12 @@
       isDraggingCarousel = true;
       dragStartX = e.touches[0].clientX;
       dragStartIndex = targetCardIndex;
-    }, {passive:true});
+    }, { passive: true });
 
     cardScene.addEventListener('touchmove', (e) => {
       if (!isDraggingCarousel) return;
       let dx = dragStartX - e.touches[0].clientX;
-      let DRAG_SENSITIVITY = window.innerWidth <= 768 ? 90 : PIXELS_PER_INDEX;
-      let dragOffset = dx / DRAG_SENSITIVITY;
+      let dragOffset = dx / PIXELS_PER_INDEX;
       let rawTarget = dragStartIndex + dragOffset;
       targetCardIndex = Math.max(-0.5, Math.min(cardDataList.length - 0.5, rawTarget));
     });

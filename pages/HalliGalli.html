@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>할리갈리</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #fce4ec;
+            /* Soft pink background */
+            font-family: 'Noto Sans KR', sans-serif;
+            color: #333;
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 4rem 5rem;
+            border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            z-index: 10;
+        }
+
+        .title-container {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-family: 'Jua', sans-serif;
+            font-size: 5rem;
+            margin: 0;
+            color: #d81b60;
+            /* Deep pink/red */
+            text-shadow: 2px 2px 0px #fff,
+                4px 4px 0px rgba(0, 0, 0, 0.1);
+            letter-spacing: 5px;
+        }
+
+        .start-btn {
+            padding: 1.2rem 4rem;
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-family: 'Jua', sans-serif;
+            color: white;
+            background: linear-gradient(145deg, #ff4081, #c2185b);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 8px 15px rgba(194, 24, 91, 0.3),
+                0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .start-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: all 0.5s ease;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 25px rgba(194, 24, 91, 0.4),
+                0 8px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .start-btn:hover::after {
+            left: 100%;
+        }
+
+        .start-btn:active {
+            transform: translateY(2px) scale(0.98);
+            box-shadow: 0 5px 10px rgba(194, 24, 91, 0.3);
+        }
+
+        .difficulty-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .difficulty-label {
+            font-family: 'Jua', sans-serif;
+            font-size: 2.5rem;
+            color: #d81b60;
+            width: 150px;
+            text-align: center;
+            user-select: none;
+            text-shadow: 1px 1px 0px #fff;
+            transition: color 0.3s ease;
+        }
+
+        .arrow-btn {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: #ff4081;
+            cursor: pointer;
+            transition: transform 0.2s, color 0.2s;
+            padding: 0.5rem;
+        }
+
+        .arrow-btn:hover:not(:disabled) {
+            transform: scale(1.2);
+            color: #c2185b;
+        }
+
+        .arrow-btn:active:not(:disabled) {
+            transform: scale(0.9);
+        }
+
+        .arrow-btn:disabled {
+            color: #bdbdbd;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #falling-cards-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .falling-card {
+            position: absolute;
+            top: -100px;
+            width: 70px;
+            height: 100px;
+            background-color: white;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            justify-items: center;
+            align-content: center;
+            gap: 2px;
+            padding: 10px;
+            box-sizing: border-box;
+            font-size: 1.3rem;
+            line-height: 1;
+            animation: fall linear forwards;
+        }
+
+        .falling-card::before {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            bottom: 4px;
+            border: 1px dashed #bdbdbd;
+            border-radius: 3px;
+        }
+
+        /* Card layout rules unified below */
+
+        /* --- Game Board Styles --- */
+        #game-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+            background-color: #263238;
+            /* Dark elegant background */
+            z-index: 20;
+        }
+
+        .table {
+            position: relative;
+            width: 90vw;
+            max-width: 500px;
+            height: 90vw;
+            max-height: 500px;
+            min-width: 360px;
+            min-height: 360px;
+            border-radius: 50%;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 0 40px rgba(0, 0, 0, 0.7);
+            background-image: repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 2px, transparent 2px, transparent 8px),
+                radial-gradient(circle, #8d6e63 0%, #4e342e 100%);
+            border: 8px solid #3e2723;
+        }
+
+        .bell {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, #f5f5f5 20%, #9e9e9e 90%);
+            border-radius: 50%;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5), inset 0 5px 15px rgba(255, 255, 255, 1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 20;
+        }
+
+        .bell:active {
+            transform: translate(-50%, -48%) scale(0.95);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5), inset 0 5px 15px rgba(255, 255, 255, 0.8);
+        }
+
+        .bell-button {
+            width: 45px;
+            height: 45px;
+            background: radial-gradient(circle, #ff5252 10%, #c62828 90%);
+            border-radius: 50%;
+            box-shadow: inset 0 3px 6px rgba(255, 255, 255, 0.6), 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .deck {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 100px;
+            background-color: #1976d2;
+            border-radius: 6px;
+            border: 3px solid white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255, 255, 255, 0.15) 10px, rgba(255, 255, 255, 0.15) 20px);
+            z-index: 5;
+        }
+
+        /* Create a realistic card stack effect */
+        .deck::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: -4px;
+            width: 100%;
+            height: 100%;
+            background-color: #1565c0;
+            border-radius: 6px;
+            border: 3px solid #e0e0e0;
+            z-index: -1;
+        }
+
+        .deck::before {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: -8px;
+            width: 100%;
+            height: 100%;
+            background-color: #0d47a1;
+            border-radius: 6px;
+            border: 3px solid #bdbdbd;
+            z-index: -2;
+        }
+
+        .player-slot {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+        }
+
+        .player-slot > * {
+            pointer-events: auto;
+        }
+
+        .slot-0 { transform: rotate(0deg); }
+        .slot-1 { transform: rotate(120deg); }
+        .slot-2 { transform: rotate(240deg); }
+
+        .deck-pos {
+            bottom: 25px;
+            left: calc(50% - 45px);
+            transform: translateX(-50%);
+        }
+
+        .spotlight {
+            box-shadow: 0 0 30px #ffff00, inset 0 0 10px #ffff00 !important;
+            border-color: #ffeb3b !important;
+        }
+
+        .played-area {
+            position: absolute;
+            width: 70px;
+            height: 100px;
+            border-radius: 6px;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            box-sizing: border-box;
+            z-index: 15;
+            bottom: 25px;
+            left: calc(50% + 45px);
+            transform: translateX(-50%);
+        }
+
+        .played-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            border-radius: 6px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            justify-items: center;
+            align-content: center;
+            gap: 2px;
+            padding: 10px;
+            box-sizing: border-box;
+            font-size: 1.3rem;
+            line-height: 1;
+        }
+
+        .played-card::before {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            bottom: 4px;
+            border: 1px dashed #bdbdbd;
+            border-radius: 3px;
+            pointer-events: none;
+        }
+
+        .played-card > span {
+            z-index: 1;
+            position: relative;
+        }
+
+        /* Unified Card Layout Rules */
+        .falling-card.count-1, .played-card.count-1 {
+            grid-template-columns: 1fr;
+        }
+
+        .falling-card.count-2, .played-card.count-2 {
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        /* 3 count: 2-1 layout forced */
+        .falling-card.count-3 > span:last-child, .played-card.count-3 > span:last-child {
+            grid-column: span 2;
+        }
+
+        /* 5 count: 2-1-2 layout forced */
+        .falling-card.count-5 > span:nth-child(3), .played-card.count-5 > span:nth-child(3) {
+            grid-column: span 2;
+        }
+
+        /* Card Back for Flip Animation */
+        .played-card::after {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background-color: #1976d2;
+            border-radius: 6px;
+            border: 3px solid white;
+            box-sizing: border-box;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255, 255, 255, 0.15) 10px, rgba(255, 255, 255, 0.15) 20px);
+            z-index: 10;
+            opacity: 0;
+        }
+
+        .played-card.fly-flip::after {
+            animation: hideBack 0.3s linear forwards;
+        }
+
+        @keyframes hideBack {
+            0%, 49.9% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        @keyframes flyCard {
+            0% { transform: translateX(-90px) perspective(400px) rotateY(-180deg) scale(1); }
+            50% { transform: translateX(-45px) perspective(400px) rotateY(-90deg) scale(1.1); }
+            100% { transform: translateX(0) perspective(400px) rotateY(0deg) scale(1); }
+        }
+
+        .played-card.fly-flip {
+            animation: flyCard 0.3s ease-out forwards;
+        }
+
+        /* Corner HUD Elements */
+        .player-hud {
+            position: absolute;
+            width: 100px;
+            padding: 10px 5px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            text-align: center;
+            font-weight: bold;
+            transition: background-color 0.3s, box-shadow 0.3s, transform 0.2s;
+            z-index: 30;
+            background-color: #FFD700; /* Gold default */
+            color: #333;
+            border: 2px solid rgba(255,255,255,0.8);
+        }
+
+        .hud-bottom-left { bottom: 20px; left: 20px; }
+        .hud-top-left { top: 20px; left: 20px; }
+        .hud-top-right { top: 20px; right: 20px; }
+
+        .hud-name { font-size: 1rem; margin-bottom: 5px; opacity: 0.9; }
+        .hud-lives { font-size: 0.9rem; margin-bottom: 5px; letter-spacing: 2px; }
+        .hud-count { font-size: 1.4rem; font-weight: 900; }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(110vh) rotate(var(--rot, 360deg));
+                opacity: 0;
+            }
+        }
+
+        #game-over-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
+            width: 80%;
+        }
+
+        .modal-content h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #fff;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+
+        .modal-content p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: #f5f5f5;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="falling-cards-container"></div>
+
+    <!-- Main Menu -->
+    <div class="content-wrapper">
+        <div class="title-container">
+            <h1>할리갈리</h1>
+        </div>
+
+        <div class="difficulty-container">
+            <button class="arrow-btn" id="prev-diff">&#9664;</button>
+            <span class="difficulty-label" id="difficulty-label">Normal</span>
+            <button class="arrow-btn" id="next-diff">&#9654;</button>
+        </div>
+
+        <button class="start-btn" id="start-btn">Start</button>
+    </div>
+
+    <!-- Active Game Screen -->
+    <div id="game-container">
+        <!-- Player UI HUDs -->
+        <div id="hud-0" class="player-hud hud-bottom-left">
+            <div class="hud-name">Player</div>
+            <div class="hud-lives" id="lives-0">❤️❤️❤️</div>
+            <div class="hud-count" id="hud-count-0">50</div>
+        </div>
+        <div id="hud-1" class="player-hud hud-top-left">
+            <div class="hud-name">COM 1</div>
+            <div class="hud-count" id="hud-count-1">50</div>
+        </div>
+        <div id="hud-2" class="player-hud hud-top-right">
+            <div class="hud-name">COM 2</div>
+            <div class="hud-count" id="hud-count-2">50</div>
+        </div>
+
+        <div class="table">
+            <!-- Central Bell -->
+            <div class="bell" id="bell">
+                <div class="bell-button"></div>
+            </div>
+
+            <!-- Player 0 (Bottom) -->
+            <div class="player-slot slot-0">
+                <div class="played-area" id="table-area-0"></div>
+                <div class="deck deck-pos" id="deck-0"></div>
+            </div>
+
+            <!-- Player 1 (Top Left) -->
+            <div class="player-slot slot-1">
+                <div class="played-area" id="table-area-1"></div>
+                <div class="deck deck-pos" id="deck-1"></div>
+            </div>
+
+            <!-- Player 2 (Top Right) -->
+            <div class="player-slot slot-2">
+                <div class="played-area" id="table-area-2"></div>
+                <div class="deck deck-pos" id="deck-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="game-over-modal" style="display: none;">
+        <div class="modal-content glass">
+            <h2 id="modal-title">게임 종료</h2>
+            <p id="modal-message">패배했습니다!</p>
+            <button id="btn-main-menu" class="btn" style="background-color: #f44336; padding: 15px 40px; font-size: 1.2rem; border-radius: 30px;">메인 화면으로</button>
+        </div>
+    </div>
+
+    <script>
+        const difficulties = ['Easy', 'Normal', 'Hard'];
+        let currentDiffIndex = 1; // Default 'Normal'
+
+        const difficultyLabel = document.getElementById('difficulty-label');
+        const prevBtn = document.getElementById('prev-diff');
+        const nextBtn = document.getElementById('next-diff');
+
+        function updateDifficulty() {
+            difficultyLabel.textContent = difficulties[currentDiffIndex];
+
+            if (difficulties[currentDiffIndex] === 'Easy') {
+                difficultyLabel.style.color = '#4caf50'; // Green
+            } else if (difficulties[currentDiffIndex] === 'Normal') {
+                difficultyLabel.style.color = '#ffb300'; // Yellow
+            } else {
+                difficultyLabel.style.color = '#f44336'; // Red
+            }
+
+            prevBtn.disabled = currentDiffIndex === 0;
+            nextBtn.disabled = currentDiffIndex === difficulties.length - 1;
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentDiffIndex > 0) {
+                currentDiffIndex--;
+                updateDifficulty();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentDiffIndex < difficulties.length - 1) {
+                currentDiffIndex++;
+                updateDifficulty();
+            }
+        });
+
+        // Initialize display
+        updateDifficulty();
+
+        // Falling cards animation logic
+        const fruits = ['🍓', '🍌', '🍏', '🍇']; // Halli Galli fruits
+        const cardContainer = document.getElementById('falling-cards-container');
+
+        function createFallingCard() {
+            const card = document.createElement('div');
+            card.className = 'falling-card';
+
+            const fruit = fruits[Math.floor(Math.random() * fruits.length)];
+            const count = Math.floor(Math.random() * 5) + 1; // 1 to 5
+
+            card.classList.add(`count-${count}`);
+
+            for (let i = 0; i < count; i++) {
+                const span = document.createElement('span');
+                span.textContent = fruit;
+                card.appendChild(span);
+            }
+
+            // Randomize properties
+            const startPosX = Math.random() * 100; // 0 to 100vw
+            const animationDuration = Math.random() * 4 + 6; // 6s to 10s
+            const delay = Math.random() * 2; // 0s to 2s
+            const rotationEnd = (Math.random() * 720 - 360); // -360 to 360 deg
+
+            card.style.left = `${startPosX}vw`;
+            card.style.animationDuration = `${animationDuration}s`;
+            card.style.animationDelay = `${delay}s`;
+            card.style.setProperty('--rot', `${rotationEnd}deg`);
+
+            cardContainer.appendChild(card);
+
+            // Cleanup after animation completes
+            setTimeout(() => {
+                card.remove();
+            }, (animationDuration + delay) * 1000);
+        }
+
+        // Generate cards periodically
+        setInterval(createFallingCard, 700);
+
+        // Initial batch
+        for (let i = 0; i < 6; i++) {
+            setTimeout(createFallingCard, Math.random() * 2000);
+        }
+
+        // GAME STATE
+        let decks = [[], [], []];
+        let tables = [[], [], []];
+        let lives = [3, 3, 3];
+        let currentTurn = 0; // 0: Player, 1: Opp1, 2: Opp2
+        let gameActive = false;
+        let judgmentTimer = null;
+        let oppTurnTimer = null;
+        let waitingForBell = false;
+
+        const maxTimes = {
+            'Easy': 1000,
+            'Normal': 800,
+            'Hard': 500
+        };
+
+        function generateDeck() {
+            let deck = [];
+            const counts = [1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5];
+            for (let i = 0; i < 50; i++) {
+                deck.push({
+                    fruit: fruits[Math.floor(Math.random() * fruits.length)],
+                    count: counts[Math.floor(Math.random() * counts.length)]
+                });
+            }
+            return deck;
+        }
+
+        function initGame() {
+            decks = [generateDeck(), generateDeck(), generateDeck()];
+            tables = [[], [], []];
+            lives = [3, 3, 3];
+            currentTurn = 0;
+            updateRanks();
+            updateUI();
+            startTurn();
+        }
+
+        function updateRanks() {
+            let ranks = [0, 1, 2].map(i => {
+                return { id: i, count: decks[i].length + tables[i].length };
+            });
+
+            ranks.sort((a, b) => {
+                if (b.count !== a.count) return b.count - a.count;
+                let distA = (a.id - currentTurn + 3) % 3;
+                let distB = (b.id - currentTurn + 3) % 3;
+                return distB - distA; // Higher dist goes first
+            });
+
+            const colors = ['#FFD700', '#C0C0C0', '#CD7F32'];
+            
+            ranks.forEach((r, idx) => {
+                const hud = document.getElementById(`hud-${r.id}`);
+                if (r.count === 0 || (r.id === 0 && lives[0] <= 0)) {
+                    hud.style.backgroundColor = '#777';
+                    hud.style.color = '#ccc';
+                } else {
+                    hud.style.backgroundColor = colors[idx];
+                    hud.style.color = '#333';
+                }
+            });
+        }
+
+        function updateUI() {
+            for (let i=0; i<3; i++) {
+                let deckCount = decks[i].length;
+                let totalCount = deckCount + tables[i].length;
+                document.getElementById(`hud-count-${i}`).textContent = `${deckCount}/${totalCount}`;
+                
+                if (i === 0) {
+                    let heartsStr = '';
+                    for (let j=0; j<lives[0]; j++) heartsStr += '❤️';
+                    document.getElementById('lives-0').textContent = heartsStr;
+                }
+
+                document.getElementById(`deck-${i}`).classList.toggle('spotlight', currentTurn === i);
+                renderTableCard(`table-area-${i}`, tables[i]);
+            }
+        }
+
+        function renderTableCard(containerId, tableArray) {
+            const container = document.getElementById(containerId);
+            if (tableArray.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const topCard = tableArray[tableArray.length - 1];
+            if (container.lastChild && container.lastChild.dataset.idx === String(tableArray.length)) {
+                return;
+            }
+
+            const cardDiv = document.createElement('div');
+            cardDiv.className = `played-card count-${topCard.count} fly-flip`;
+            cardDiv.dataset.idx = tableArray.length;
+            
+            for (let i = 0; i < topCard.count; i++) {
+                const span = document.createElement('span');
+                span.textContent = topCard.fruit;
+                cardDiv.appendChild(span);
+            }
+            container.appendChild(cardDiv);
+
+            setTimeout(() => {
+                while (container.childNodes.length > 1 && container.firstChild !== cardDiv) {
+                    container.removeChild(container.firstChild);
+                }
+            }, 300);
+        }
+
+        function startTurn() {
+            if (!gameActive) return;
+            updateUI();
+
+            // Player instantly loses condition
+            if (lives[0] <= 0 || (decks[0].length === 0 && tables[0].length === 0)) {
+                showGameOver('패배했습니다!', '하트를 모두 잃었거나 카드가 다 떨어졌습니다.');
+                return;
+            }
+
+            const activePlayers = [0, 1, 2].filter(i => decks[i].length > 0 || tables[i].length > 0);
+            if (activePlayers.length <= 1) {
+                if (activePlayers[0] === 0) {
+                    showGameOver('승리했습니다!', '혼자 살아남았습니다.');
+                } else {
+                    showGameOver('패배했습니다!', '남은 플레이어가 승리했습니다.');
+                }
+                return;
+            }
+
+            if (decks[currentTurn].length === 0) {
+                currentTurn = (currentTurn + 1) % 3;
+                startTurn();
+                return;
+            }
+
+            waitingForBell = false;
+
+            if (currentTurn !== 0) {
+                const oppWaitTime = Math.random() * 1500 + 500;
+                oppTurnTimer = setTimeout(() => {
+                    flipCard(currentTurn);
+                }, oppWaitTime);
+            }
+        }
+
+        document.getElementById('deck-0').addEventListener('click', () => {
+            if (gameActive && currentTurn === 0 && decks[0].length > 0 && !waitingForBell) {
+                flipCard(0);
+            }
+        });
+
+        function flipCard(turnIndex) {
+            tables[turnIndex].push(decks[turnIndex].shift());
+            updateUI();
+            
+            setTimeout(() => {
+                checkAndJudge();
+            }, 300);
+        }
+
+        function checkAndJudge() {
+            waitingForBell = true;
+            
+            let fruitCounts = {};
+            for (let i=0; i<3; i++) {
+                if (tables[i].length > 0) {
+                    const top = tables[i][tables[i].length - 1];
+                    fruitCounts[top.fruit] = (fruitCounts[top.fruit] || 0) + top.count;
+                }
+            }
+
+            let hasFive = Object.values(fruitCounts).some(v => v === 5);
+            let diff = difficulties[currentDiffIndex];
+            
+            if (hasFive) {
+                let windowTime = 0;
+                if (diff === 'Easy') windowTime = Math.random() * 200 + 800;
+                else if (diff === 'Normal') windowTime = Math.random() * 300 + 500;
+                else if (diff === 'Hard') windowTime = Math.random() * 200 + 300;
+
+                judgmentTimer = setTimeout(() => {
+                    const opps = [1, 2].filter(i => decks[i].length > 0 || tables[i].length > 0);
+                    const winner = opps.length > 0 ? opps[Math.floor(Math.random() * opps.length)] : 0;
+                    winCards(winner, winner);
+                }, windowTime);
+            } else {
+                let waitMax = maxTimes[diff];
+                judgmentTimer = setTimeout(() => {
+                    waitingForBell = false;
+                    currentTurn = (currentTurn + 1) % 3;
+                    startTurn();
+                }, waitMax);
+            }
+        }
+
+        document.getElementById('bell').addEventListener('click', () => {
+            if (!gameActive || !waitingForBell) return;
+            clearTimeout(judgmentTimer);
+
+            let fruitCounts = {};
+            for (let i=0; i<3; i++) {
+                if (tables[i].length > 0) {
+                    const top = tables[i][tables[i].length - 1];
+                    fruitCounts[top.fruit] = (fruitCounts[top.fruit] || 0) + top.count;
+                }
+            }
+
+            let hasFive = Object.values(fruitCounts).some(v => v === 5);
+
+            if (hasFive) {
+                winCards(0, 0);
+            } else {
+                penalty(0);
+            }
+        });
+
+        function winCards(winnerIndex, ringerIndex) {
+            waitingForBell = false;
+            let earnedCards = [];
+            for (let i=0; i<3; i++) {
+                earnedCards.push(...tables[i]);
+                tables[i] = [];
+            }
+            earnedCards.sort(() => Math.random() - 0.5);
+
+            decks[winnerIndex].push(...earnedCards);
+            currentTurn = winnerIndex;
+            updateRanks();
+
+            const ringerHud = document.getElementById(`hud-${ringerIndex}`);
+            ringerHud.style.boxShadow = '0 0 30px rgba(76,175,80,1), inset 0 0 20px rgba(76,175,80,0.5)';
+            ringerHud.style.transform = 'scale(1.1)';
+
+            setTimeout(() => {
+                ringerHud.style.boxShadow = '0 4px 10px rgba(0,0,0,0.5)';
+                ringerHud.style.transform = 'scale(1)';
+                updateUI();
+                startTurn();
+            }, 800);
+        }
+
+        function penalty(ringerIndex) {
+            waitingForBell = false;
+            lives[ringerIndex]--;
+            
+            const ringerHud = document.getElementById(`hud-${ringerIndex}`);
+            ringerHud.style.boxShadow = '0 0 30px rgba(244,67,54,1), inset 0 0 20px rgba(244,67,54,0.5)';
+            ringerHud.style.transform = 'scale(1.1)';
+
+            updateUI(); // Immediate heart update
+
+            if (lives[ringerIndex] <= 0) {
+                decks[ringerIndex] = [];
+                tables[ringerIndex] = [];
+            }
+            updateRanks();
+
+            currentTurn = (currentTurn + 1) % 3;
+
+            setTimeout(() => {
+                ringerHud.style.boxShadow = '0 4px 10px rgba(0,0,0,0.5)';
+                ringerHud.style.transform = 'scale(1)';
+                updateUI();
+                startTurn();
+            }, 800);
+        }
+
+        function resetGame() {
+            gameActive = false;
+            document.getElementById('game-container').style.display = 'none';
+            document.querySelector('.content-wrapper').style.display = 'flex';
+            document.getElementById('falling-cards-container').style.display = 'block';
+            clearTimeout(judgmentTimer);
+            clearTimeout(oppTurnTimer);
+        }
+
+        document.getElementById('start-btn').addEventListener('click', () => {
+            console.log(`Start button clicked! Difficulty: ${difficulties[currentDiffIndex]}`);
+
+            // Hide main menu and floating background
+            document.querySelector('.content-wrapper').style.display = 'none';
+            document.getElementById('falling-cards-container').style.display = 'none';
+            // Show game board
+            document.getElementById('game-container').style.display = 'flex';
+
+            gameActive = true;
+            initGame();
+        });
+
+        function showGameOver(title, msg) {
+            gameActive = false;
+            clearTimeout(judgmentTimer);
+            clearTimeout(oppTurnTimer);
+            
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = msg;
+            document.getElementById('game-over-modal').style.display = 'flex';
+        }
+
+        document.getElementById('btn-main-menu').addEventListener('click', () => {
+            document.getElementById('game-over-modal').style.display = 'none';
+            resetGame();
+        });
+    </script>
+</body>
+
+</html>
