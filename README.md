@@ -3,3 +3,5 @@
 2026 Spring Semester DC-AI-VIBE
 
 Project02_GitHubPages Example
+
+github push test
